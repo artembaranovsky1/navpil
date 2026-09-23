@@ -1,0 +1,43 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "./generated"
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  name         String
+  rooms        Room[]
+  addedItems   Item[]
+  createdAt    DateTime @default(now())
+}
+
+model Room {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  totalSum    Decimal  @default(0) @db.Decimal(12, 2)
+  users       User[]
+  items       Item[]
+  createdAt   DateTime @default(now())
+}
+
+model Item {
+  id        Int      @id @default(autoincrement())
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId    Int
+  name      String
+  quantity  Int      @default(1)
+  price     Decimal  @db.Decimal(10, 2)
+  addedBy   User     @relation(fields: [addedById], references: [id])
+  addedById Int
+  createdAt DateTime @default(now())
+
+  @@index([roomId])
+  @@index([addedById])
+}
