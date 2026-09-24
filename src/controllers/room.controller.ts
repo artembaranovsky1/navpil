@@ -2,13 +2,17 @@ import {Request, Response} from 'express';
 import * as roomService from "../services/room.service.js";
 import {Room} from "../types.js";
 
+type RoomParams = {
+    roomId: string;
+};
+
 export const getRooms = (req: Request, res: Response) => {
     const rooms = roomService.getAllRooms();
 
     res.json(rooms);
 };
 
-export const getRoom = (req: Request, res: Response) => {
+export const getRoom = (req: Request<RoomParams>, res: Response) => {
     const {roomId} = req.params;
 
     const foundRoom = roomService.getRoomById(roomId);
@@ -34,7 +38,7 @@ export const createRoom = (req: Request, res: Response) => {
 }
 
 
-export const updateRoom = (req: Request, res: Response) => {
+export const updateRoom = (req: Request<RoomParams>, res: Response) => {
     const {roomId} = req.params;
     const {name, description} = req.body;
 
@@ -55,7 +59,7 @@ export const updateRoom = (req: Request, res: Response) => {
     res.status(200).json(editRoom);
 }
 
-export const deleteRoom = (req: Request, res: Response) => {
+export const deleteRoom = (req: Request<RoomParams>, res: Response) => {
     const {roomId} = req.params;
 
     const index = roomService.findIndex(roomId)
@@ -68,4 +72,3 @@ export const deleteRoom = (req: Request, res: Response) => {
 
     res.sendStatus(204);
 }
-

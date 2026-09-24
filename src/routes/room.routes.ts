@@ -3,10 +3,10 @@ import * as roomController from '../controllers/room.controller.js';
 
 const router = Router()
 
-router.get('/rooms', roomController.getRooms);
-router.get('/rooms/:roomId', roomController.getRoom);
-router.post('/rooms', roomController.createRoom);
-router.patch('/rooms/:roomId', roomController.updateRoom);
-router.delete('/rooms/:roomId', roomController.deleteRoom);
+router.get('/', roomController.getRooms);
+router.get('/:roomId', roomController.getRoom);
+router.post('/', roomController.createRoom);
+router.patch('/:roomId', roomController.updateRoom);
+router.delete('/:roomId', roomController.deleteRoom);
 
 export default router;

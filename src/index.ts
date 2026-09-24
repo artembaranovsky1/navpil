@@ -1,5 +1,6 @@
 import express, {type Request, type Response} from 'express';
 import roomRoutes from './routes/room.routes.js';
+import itemRoutes from './routes/item.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,6 +18,7 @@ app.get('/health', (req: Request, res: Response) => {
 })
 
 app.use('/rooms', roomRoutes);
+app.use('/rooms', itemRoutes);
 
 app.listen(PORT, () => {
     console.log(`Сервер запущено на http://localhost:${PORT}`);
