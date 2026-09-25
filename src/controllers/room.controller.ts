@@ -1,6 +1,5 @@
 import {Request, Response} from 'express';
 import * as roomService from "../services/room.service.js";
-import {Room} from "../types.js";
 
 type RoomParams = {
     roomId: string;
