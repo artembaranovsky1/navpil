@@ -1,6 +1,8 @@
 import {Request, Response} from 'express';
 import * as userService from "../services/user.service.js";
 import {User} from "../types.js";
+import {userCreateSchema, userUpdateSchema} from "../validation/user.validation.js";
+import * as z from "zod";
 
 type UserParams = {
     userId: string;
@@ -15,38 +17,45 @@ export const getUsers = (req: Request, res: Response) => {
 export const getUser = (req: Request<UserParams>, res: Response) => {
     const {userId} = req.params
 
-    const foundUser: User | undefined = userService.getUser(userId)
+    const user: User | undefined = userService.getUser(userId)
 
-    if (!foundUser) {
+    if (!user) {
         return res.status(404).send({error: 'User not found'})
     }
 
-    res.status(200).json({user: foundUser})
+    res.status(200).json(user)
 }
 
 export const createUser = (req: Request, res: Response) => {
-    const {name, email} = req.body
+    const result = userCreateSchema.safeParse(req.body);
 
-    if (typeof name !== 'string' || !name.trim()) {
-        return res.status(400).send({error: 'Need a name'})
+    if (!result.success) {
+        return res.status(422).send({
+            error: 'User not found',
+            details: z.flattenError(result.error).fieldErrors,
+        })
     }
 
-    if (typeof email !== 'string' || !email.trim()) {
-        return res.status(400).send({error: 'Need a email'})
-    }
+    const {name, email} = result.data
 
     const newUser = userService.createUser(name, email)
 
-    res.status(201).json({newUser})
+    res.status(201).json(newUser)
 }
 
 export const updateUser = (req: Request<UserParams>, res: Response) => {
     const {userId} = req.params
-    const {name} = req.body
 
-    if (typeof name !== 'string' || !name.trim()) {
-        return res.status(400).send({error: 'Need a name'})
+    const result = userUpdateSchema.safeParse(req.body);
+
+    if (!result.success) {
+        return res.status(422).send({
+            error: 'User not found',
+            details: z.flattenError(result.error).fieldErrors,
+        })
     }
+
+    const {name} = result.data
 
     const user: User | undefined = userService.getUser(userId)
 
@@ -56,7 +65,7 @@ export const updateUser = (req: Request<UserParams>, res: Response) => {
 
     const updatedUser = userService.updateUser(user, name)
 
-    res.status(200).json({updatedUser})
+    res.status(200).json(updatedUser)
 }
 
 export const deleteUser = (req: Request<UserParams>, res: Response) => {
@@ -68,9 +77,7 @@ export const deleteUser = (req: Request<UserParams>, res: Response) => {
         return res.status(404).send({error: 'User not found'})
     }
 
-    const index = userService.findIndex(userId)
-
-    userService.deleteUser(index)
+    userService.deleteUser(userId)
 
     res.sendStatus(204)
 }

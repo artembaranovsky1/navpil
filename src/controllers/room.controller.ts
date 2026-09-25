@@ -1,5 +1,7 @@
 import {Request, Response} from 'express';
 import * as roomService from "../services/room.service.js";
+import {roomCreateSchema, roomUpdateSchema} from "../validation/room.validation.js";
+import * as z from "zod";
 
 type RoomParams = {
     roomId: string;
@@ -23,34 +25,41 @@ export const getRoom = (req: Request<RoomParams>, res: Response) => {
     res.status(200).json(foundRoom);
 }
 
-
 export const createRoom = (req: Request, res: Response) => {
-    const {name, description} = req.body;
+    const result = roomCreateSchema.safeParse(req.body);
 
-    if (typeof name !== 'string' || !name.trim()) {
-        return res.status(400).json({error: 'Need a name'});
+    if (!result.success) {
+        return res.status(422).json({
+            error: 'Validation failed',
+            details: z.flattenError(result.error).fieldErrors,
+        });
     }
+
+    const {name, description} = result.data;
 
     const newRoom = roomService.createRoom(name, description);
 
     res.status(201).json(newRoom);
 }
 
-
 export const updateRoom = (req: Request<RoomParams>, res: Response) => {
     const {roomId} = req.params;
-    const {name, description} = req.body;
+
+    const result = roomUpdateSchema.safeParse(req.body);
+
+    if (!result.success) {
+        return res.status(422).json({
+            error: 'Validation failed',
+            details: z.flattenError(result.error).fieldErrors,
+        });
+    }
+
+    const {name, description} = result.data;
 
     const foundRoom = roomService.getRoomById(roomId);
 
     if (!foundRoom) {
         return res.status(404).json({error: 'Room not found'});
-    }
-
-    if (name !== undefined) {
-        if (typeof name !== 'string' || !name.trim()) {
-            return res.status(400).json({error: 'Need a name'});
-        }
     }
 
     const editRoom = roomService.updateRoom(foundRoom, roomId, name, description)

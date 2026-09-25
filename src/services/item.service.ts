@@ -54,6 +54,8 @@ export const updateItem = (foundItem: Item, newName: string | undefined, newQuan
     return newItem;
 }
 
-export const deleteItem = (index: number) => {
+export const deleteItem = (itemId: string) => {
+    const index = findIndex(itemId)
+
     items.splice(index, 1);
 }

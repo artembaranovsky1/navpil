@@ -29,7 +29,7 @@ export const createUser = (name: string, email: string) => {
 }
 
 export const updateUser = (user: User, newName: string) => {
-    const editdUser = {
+    const editUser = {
         id: user.id,
         email: user.email,
         passwordHash: user.passwordHash,
@@ -39,11 +39,13 @@ export const updateUser = (user: User, newName: string) => {
 
     const index = findIndex(user.id)
 
-    users[index] = editdUser
+    users[index] = editUser
 
-    return editdUser;
+    return editUser;
 }
 
-export const deleteUser = (index: number) => {
+export const deleteUser = (userId: string) => {
+    const index = findIndex(userId)
+
     users.splice(index, 1);
 }

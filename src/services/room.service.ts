@@ -32,17 +32,23 @@ export const getRoomById = (roomId: string) => {
 }
 
 
-export const updateRoom = (foundRoom: Room, roomId: string, name: string, description: string) => {
-    const editRoom: Room = {
-        id: foundRoom.id,
-        name: name !== undefined ? name.trim() : foundRoom.name,
-        description: description ?? foundRoom.description,
-        createdAt: foundRoom.createdAt,
+export const updateRoom =
+    (
+        foundRoom: Room,
+        roomId: string,
+        name: string | undefined,
+        description: string | undefined
+    ) => {
+        const editRoom: Room = {
+            id: foundRoom.id,
+            name: name !== undefined ? name.trim() : foundRoom.name,
+            description: description ?? foundRoom.description,
+            createdAt: foundRoom.createdAt,
+        }
+
+        const index = findIndex(roomId);
+
+        rooms[index] = editRoom;
+
+        return editRoom;
     }
-
-    const index = findIndex(roomId);
-
-    rooms[index] = editRoom;
-
-    return editRoom;
-}
