@@ -8,6 +8,7 @@ type UserParams = {
     userId: string;
 };
 
+
 export const getUsers = (req: Request, res: Response) => {
     const users = userService.getUsers();
 
@@ -31,7 +32,7 @@ export const createUser = (req: Request, res: Response) => {
 
     if (!result.success) {
         return res.status(422).send({
-            error: 'User not found',
+            error: 'Validation failed',
             details: z.flattenError(result.error).fieldErrors,
         })
     }
@@ -60,7 +61,7 @@ export const updateUser = (req: Request<UserParams>, res: Response) => {
     const user: User | undefined = userService.getUser(userId)
 
     if (!user) {
-        return res.status(404).send({error: 'User not found'})
+        return res.status(404).send({error: '`User not found`'})
     }
 
     const updatedUser = userService.updateUser(user, name)

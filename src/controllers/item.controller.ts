@@ -11,6 +11,7 @@ type RoomParams = {
 
 const TEMP_USER_ID = 'temp-user';
 
+
 export const getItems = (req: Request<RoomParams>, res: Response) => {
     const {roomId} = req.params;
 
