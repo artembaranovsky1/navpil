@@ -50,7 +50,7 @@ export const updateUser = (req: Request<UserParams>, res: Response) => {
 
     if (!result.success) {
         return res.status(422).send({
-            error: 'User not found',
+            error: 'Validation failed',
             details: z.flattenError(result.error).fieldErrors,
         })
     }

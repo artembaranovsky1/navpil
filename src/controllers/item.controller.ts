@@ -58,7 +58,7 @@ export const createItem = (req: Request<RoomParams>, res: Response) => {
 
     if (!result.success) {
         return res.status(422).json({
-            error: 'Room not found',
+            error: 'Validation failed',
             details: z.flattenError(result.error).fieldErrors,
         });
     }
@@ -76,7 +76,6 @@ export const createItem = (req: Request<RoomParams>, res: Response) => {
     return res.status(201).json(newItem);
 }
 
-
 export const updateItem = (req: Request<RoomParams>, res: Response) => {
     const {roomId, itemId} = req.params;
 
@@ -84,7 +83,7 @@ export const updateItem = (req: Request<RoomParams>, res: Response) => {
 
     if (!result.success) {
         return res.status(422).json({
-            error: 'Room not found',
+            error: 'Validation failed',
             details: z.flattenError(result.error).fieldErrors,
         });
     }
