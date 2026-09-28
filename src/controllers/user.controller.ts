@@ -61,7 +61,7 @@ export const updateUser = (req: Request<UserParams>, res: Response) => {
     const user: User | undefined = userService.getUser(userId)
 
     if (!user) {
-        return res.status(404).send({error: '`User not found`'})
+        return res.status(404).send({error: 'User not found'})
     }
 
     const updatedUser = userService.updateUser(user, name)

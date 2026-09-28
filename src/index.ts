@@ -2,7 +2,8 @@ import express, {type Request, type Response} from 'express';
 import roomRoutes from './routes/room.routes.js';
 import itemRoutes from './routes/item.routes.js';
 import userRoutes from "./routes/user.routes.js";
-import { swaggerUiServe, swaggerUiSetup } from './config/swagger';
+import swaggerUi from "swagger-ui-express";
+import {openApiDocument} from "./utils/docs.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,7 +15,7 @@ app.get('/', (req: Request, res: Response) => {
     res.send('Привіт, сервер працює на Express + TypeScript!');
 });
 
-app.use('/api-docs', swaggerUiServe, swaggerUiSetup);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
 
 app.get('/health', (req: Request, res: Response) => {
     res.json('ok');
