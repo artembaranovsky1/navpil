@@ -3,7 +3,7 @@ import roomRoutes from './routes/room.routes.js';
 import itemRoutes from './routes/item.routes.js';
 import userRoutes from "./routes/user.routes.js";
 import swaggerUi from "swagger-ui-express";
-import {openApiDocument} from "./utils/docs.js";
+import {openApiDocument} from "./docs/index.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
