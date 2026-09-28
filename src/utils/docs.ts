@@ -1,11 +1,13 @@
 import {OpenApiGeneratorV3} from '@asteasolutions/zod-to-openapi';
 import {usersRegistry} from "./users.OpenAPIRegistry.js";
 import {itemsRegistry} from "./items.OpenAPIRegistry.js";
+import {roomsRegistry} from "./rooms.OpenAPIRegistry.js";
 
 function getOpenApiDocumentation() {
     const generator = new OpenApiGeneratorV3([
         ...usersRegistry.definitions,
         ...itemsRegistry.definitions,
+        ...roomsRegistry.definitions,
     ]);
 
     return generator.generateDocument({
