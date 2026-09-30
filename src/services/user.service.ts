@@ -1,10 +1,17 @@
-import { User} from "../types.js";
+import {User} from "../types.js";
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
-const users: User[] = []
+export const users: User[] = []
 
 export const findIndex = (userId: string) => {
     return users.findIndex((user: User) => user.id === userId);
 }
+
+export const findByEmail = (email: string) => {
+    return users.find((user: User) => user.email === email);
+}
+
 
 export const getUsers = () => {
     return users
@@ -14,12 +21,14 @@ export const getUser = (userId: string) => {
     return users.find((user: User) => user.id === userId)
 }
 
-export const createUser = (name: string, email: string) => {
+export const createUser = async (name: string, email: string, password: string) => {
+    const passwordHash = await bcrypt.hash(password, 10);
+
     const newUser = {
         id: crypto.randomUUID(),
-        email: email,
-        passwordHash: crypto.randomUUID(),
-        name: name,
+        email,
+        passwordHash,
+        name,
         createdAt: new Date(),
     }
 
@@ -49,3 +58,28 @@ export const deleteUser = (userId: string) => {
 
     users.splice(index, 1);
 }
+
+export const verifyPassword = async (user: User, password: string): Promise<boolean> => {
+    return bcrypt.compare(password, user.passwordHash)
+}
+
+export const createJwtToken = (user: User) => {
+    return jwt.sign({
+            userId: user.id,
+        },
+        process.env.JWT_SECRET_KEY,
+        {
+            expiresIn: 60 * 60
+        }
+    )
+}
+
+export const toUserResponse = (user: User) => {
+    return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        createdAt: user.createdAt,
+    }
+}
+
