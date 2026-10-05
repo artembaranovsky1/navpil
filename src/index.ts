@@ -6,16 +6,17 @@ import userRoutes from "./routes/user.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import swaggerUi from "swagger-ui-express";
 import {openApiDocument} from "./docs/index.js";
+import {verifyToken} from "./auth/middleware.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-if (!process.env.JWT_SECRET_KEY) {
-    console.error("ПОМИЛКА: Змінна JWT_SECRET_KEY не задана в оточенні!");
-    process.exit(1); // Зупиняє роботу сервера
-}
+// if (!process.env.JWT_SECRET_KEY) {
+//     console.error("ПОМИЛКА: Змінна JWT_SECRET_KEY не задана в оточенні!");
+//     process.exit(1); // Зупиняє роботу сервера
+// }
 
 app.get('/', (req: Request, res: Response) => {
     res.status(200)
@@ -30,8 +31,8 @@ app.get('/health', (req: Request, res: Response) => {
 
 app.use('/auth', authRoutes);
 app.use('/rooms', roomRoutes);
-app.use('/rooms', itemRoutes);
-app.use('/users', userRoutes);
+app.use('/rooms', verifyToken, itemRoutes);
+app.use('/users', verifyToken, userRoutes);
 
 app.listen(PORT, () => {
     console.log(`Сервер запущено на http://localhost:${PORT}`);

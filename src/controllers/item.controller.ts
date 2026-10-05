@@ -1,59 +1,50 @@
-import {Request, Response} from 'express';
-import * as roomService from "../services/room.service.js";
-import * as itemService from "../services/item.service.js";
-import * as z from "zod";
-import {itemCreateSchema, itemUpdateSchema} from "../validation/item.validation.js";
+import type { Request, Response } from 'express';
+import * as z from 'zod';
+import * as roomService from '../services/room.service.js';
+import * as itemService from '../services/item.service.js';
+import { itemCreateSchema, itemUpdateSchema } from '../validation/item.validation.js';
 
 type RoomParams = {
+    roomId: string;
+};
+
+type ItemParams = {
     roomId: string;
     itemId: string;
 };
 
-const TEMP_USER_ID = 'temp-user';
-
-
 export const getItems = (req: Request<RoomParams>, res: Response) => {
-    const {roomId} = req.params;
+    const { roomId } = req.params;
 
-    const room = roomService.getRoomById(roomId);
-
-    if (!room) {
-        return res.status(404).json({error: 'Room not found'});
+    if (!roomService.getRoomById(roomId)) {
+        return res.status(404).json({ error: 'Room not found' });
     }
 
-    const items = itemService.getItemsByRoomId(roomId);
+    res.json(itemService.getItemsByRoomId(roomId));
+};
 
-    res.status(200).json(items);
-}
+export const getItem = (req: Request<ItemParams>, res: Response) => {
+    const { roomId, itemId } = req.params;
 
-export const getItem = (req: Request<RoomParams>, res: Response) => {
-    const {roomId, itemId} = req.params;
-
-    const room = roomService.getRoomById(roomId);
-
-    const item = itemService.findItem(itemId)
-
-    if (!room) {
-        return res.status(404).json({error: 'Room not found'});
+    if (!roomService.getRoomById(roomId)) {
+        return res.status(404).json({ error: 'Room not found' });
     }
+
+    const item = itemService.findItemInRoom(roomId, itemId);
 
     if (!item) {
-        return res.status(404).json({error: 'Item not found'});
+        return res.status(404).json({ error: 'Item not found' });
     }
 
-    const itemIsThisRoom = item?.roomId === roomId;
-
-    if (!itemIsThisRoom) {
-        return res.status(404).json({error: 'Item not found'});
-    }
-
-    const foundItem = itemService.findItem(itemId)
-
-    res.status(200).json(foundItem);
-}
+    res.json(item);
+};
 
 export const createItem = (req: Request<RoomParams>, res: Response) => {
-    const {roomId} = req.params;
+    if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { roomId } = req.params;
 
     const result = itemCreateSchema.safeParse(req.body);
 
@@ -64,21 +55,19 @@ export const createItem = (req: Request<RoomParams>, res: Response) => {
         });
     }
 
-    const {name, quantity, price} = result.data;
-
-    const room = roomService.getRoomById(roomId);
-
-    if (!room) {
-        return res.status(404).json({error: 'Room not found'});
+    if (!roomService.getRoomById(roomId)) {
+        return res.status(404).json({ error: 'Room not found' });
     }
 
-    const newItem = itemService.createItem(roomId, name, quantity, price, TEMP_USER_ID)
+    const { name, quantity, price } = result.data;
 
-    return res.status(201).json(newItem);
-}
+    const newItem = itemService.createItem(roomId, name, quantity, price, req.user.id);
 
-export const updateItem = (req: Request<RoomParams>, res: Response) => {
-    const {roomId, itemId} = req.params;
+    res.status(201).json(newItem);
+};
+
+export const updateItem = (req: Request<ItemParams>, res: Response) => {
+    const { roomId, itemId } = req.params;
 
     const result = itemUpdateSchema.safeParse(req.body);
 
@@ -89,53 +78,37 @@ export const updateItem = (req: Request<RoomParams>, res: Response) => {
         });
     }
 
-    const {name, quantity, price} = result.data;
-
-    const room = roomService.getRoomById(roomId);
-
-    const item = itemService.findItem(itemId)
-
-    if (!room) {
-        return res.status(404).json({error: 'Room not found'});
+    if (!roomService.getRoomById(roomId)) {
+        return res.status(404).json({ error: 'Room not found' });
     }
+
+    const item = itemService.findItemInRoom(roomId, itemId);
 
     if (!item) {
-        return res.status(404).json({error: 'Item not found'});
+        return res.status(404).json({ error: 'Item not found' });
     }
 
-    const itemIsThisRoom = item?.roomId === roomId;
+    const { name, quantity, price } = result.data;
 
-    if (!itemIsThisRoom) {
-        return res.status(404).json({error: 'Item not found'});
+    const updatedItem = itemService.updateItem(item, name, quantity, price);
+
+    res.json(updatedItem);
+};
+
+export const deleteItem = (req: Request<ItemParams>, res: Response) => {
+    const { roomId, itemId } = req.params;
+
+    if (!roomService.getRoomById(roomId)) {
+        return res.status(404).json({ error: 'Room not found' });
     }
 
-    const updatedItem = itemService.updateItem(item, name, quantity, price)
-
-    return res.status(200).json(updatedItem);
-}
-
-export const deleteItem = (req: Request<RoomParams>, res: Response) => {
-    const {roomId, itemId} = req.params;
-
-    const room = roomService.getRoomById(roomId);
-
-    const item = itemService.findItem(itemId)
-
-    if (!room) {
-        return res.status(404).json({error: 'Room not found'});
-    }
+    const item = itemService.findItemInRoom(roomId, itemId);
 
     if (!item) {
-        return res.status(404).json({error: 'Item not found'});
+        return res.status(404).json({ error: 'Item not found' });
     }
 
-    const itemIsThisRoom = item?.roomId === roomId;
+    itemService.deleteItem(itemId);
 
-    if (!itemIsThisRoom) {
-        return res.status(404).json({error: 'Item not found'});
-    }
-
-    itemService.deleteItem(itemId)
-
-    return res.sendStatus(204)
-}
+    res.sendStatus(204);
+};

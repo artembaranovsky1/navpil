@@ -14,6 +14,10 @@ export const getItemsByRoomId = (roomId: string): Item[] => {
     return items.filter((item: Item) => item.roomId === roomId);
 }
 
+export const findItemInRoom = (roomId: string, itemId: string): Item | undefined => {
+    return items.find((item) => item.id === itemId && item.roomId === roomId);
+};
+
 export const createItem = (
     roomId: string,
     name: string,
