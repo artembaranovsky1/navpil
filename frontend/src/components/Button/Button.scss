@@ -1,0 +1,144 @@
+@use '../../styles/color' as *;
+@use '../../styles/typography' as *;
+
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-family: $font-family;
+  font-weight: $weight-medium;
+  cursor: pointer;
+  transition:
+          background-color 0.15s,
+          border-color 0.15s,
+          transform 0.1s;
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+            0 0 0 2px $background,
+            0 0 0 4px $green;
+  }
+
+  &:disabled:not(.button--loading) {
+    cursor: not-allowed;
+    background: $disabled-bg;
+    border-color: $disabled-bg;
+    color: $disabled-text;
+  }
+
+  // Розміри: менше 44 px не робимо
+  &--sm {
+    height: 44px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
+
+  &--md {
+    height: 48px;
+    padding: 0 22px;
+    font-size: 15px;
+  }
+
+  &--lg {
+    height: 56px;
+    padding: 0 28px;
+    font-size: 16px;
+  }
+
+  // Варіанти
+  &--primary {
+    background: $ink;
+    color: $surface;
+
+    &:hover:not(:disabled) {
+      background: $ink-hover;
+    }
+
+    &:active:not(:disabled) {
+      background: $ink-pressed;
+    }
+  }
+
+  &--secondary {
+    background: transparent;
+    border-color: $ink;
+    color: $ink;
+
+    &:hover:not(:disabled) {
+      background: $ghost;
+    }
+
+    &:active:not(:disabled) {
+      background: $ghost-hover;
+    }
+  }
+
+  &--ghost {
+    background: $ghost;
+    color: $ink;
+
+    &:hover:not(:disabled) {
+      background: $ghost-hover;
+    }
+
+    &:active:not(:disabled) {
+      background: $ghost-pressed;
+    }
+  }
+
+  &--danger {
+    background: transparent;
+    border-color: $field-border;
+    color: $red;
+
+    &:hover:not(:disabled) {
+      background: $red-tint;
+      border-color: $red;
+    }
+
+    &:active:not(:disabled) {
+      background: $red;
+      color: $surface;
+    }
+
+    &:focus-visible {
+      box-shadow:
+              0 0 0 2px $background,
+              0 0 0 4px $red;
+    }
+  }
+
+  // Завантаження: текст ховаємо, але він тримає ширину кнопки
+  &--loading {
+    cursor: progress;
+
+    .button__label {
+      visibility: hidden;
+    }
+  }
+
+  &__spinner {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2.4px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: button-spin 0.9s linear infinite;
+  }
+}
+
+@keyframes button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,17 @@
+@use 'color' as *;
+@use 'typography' as *;
+
+@import url('https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: $font-family;
+  background: $background;
+  color: $ink;
+}
