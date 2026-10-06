@@ -7,11 +7,13 @@ import authRoutes from "./routes/auth.routes.js";
 import swaggerUi from "swagger-ui-express";
 import {openApiDocument} from "./docs/index.js";
 import {verifyToken} from "./auth/middleware.js";
+import cors from 'cors'
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+app.use(cors())
 
 app.get('/', (req: Request, res: Response) => {
     res.status(200)
