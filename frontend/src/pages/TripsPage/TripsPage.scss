@@ -1,0 +1,114 @@
+@use '../../styles/color' as *;
+@use '../../styles/typography' as *;
+
+
+.trip-menu {
+  padding: 32px 16px;
+  width: 240px;
+  height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  //background-color: #ffe2e2;
+}
+
+.trip-menu__logo {
+  background: url('/navpil-logo.png') no-repeat center / contain;
+  width: 120px;
+  aspect-ratio: 1740 / 520;
+  margin-bottom: 32px;
+}
+
+.trip-menu__nav {
+  margin-bottom: 32px;
+}
+
+
+.trip-menu__link {
+  height: 44px;
+  background-color: $ghost;
+  padding: 0 12px;
+  margin-bottom: 6px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+
+  color: $ink;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500
+}
+
+.trip-menu__link-disable {
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+
+  color: $ink;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500
+}
+
+
+
+.trip-menu__travel-name {
+  margin-bottom: 10px;
+}
+
+.trip-menu__travel {
+  margin-bottom: 10px;
+  padding-left: 10px;
+}
+
+.trip-menu__link-logo-1 {
+  background: url('/icon/icon-trips.png') no-repeat center / contain;
+  height: 18px;
+  width: 18px;
+  margin-right: 10px;
+}
+
+.trip-menu__link-logo-2 {
+  background: url('/icon/icon-connection.png') no-repeat center / contain;
+  height: 18px;
+  width: 18px;
+  margin-right: 10px;
+}
+
+.trip-menu__user {
+  display: flex;
+  margin-top: auto;
+}
+
+.trip-menu__user-photo {
+  width: 36px;
+  height: 36px;
+  margin-right: 12px;
+  border-radius: 50%;
+  background-color: $ink;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center
+}
+
+.trip-menu__user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.trip-menu__user-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.trip-menu__user-email {
+  font-size: 12px;
+  color: #6B6B66
+}

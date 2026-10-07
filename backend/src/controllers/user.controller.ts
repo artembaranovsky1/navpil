@@ -27,6 +27,20 @@ export const getUser = (req: Request<UserParams>, res: Response) => {
     res.status(200).json(user)
 }
 
+export const getMe = (req: Request, res: Response) => {
+    if (!req.user) {
+        return res.status(401).send({error: 'Unauthorized'})
+    }
+
+    const user = userService.findById(req.user.id)
+
+    if (!user) {
+        return res.status(404).send({error: 'User not found'})
+    }
+
+    res.status(200).json(user)
+}
+
 export const createUser = async (req: Request, res: Response) => {
     const result = userCreateSchema.safeParse(req.body);
 

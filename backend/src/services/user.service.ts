@@ -13,6 +13,10 @@ export const findByEmail = (email: string) => {
     return users.find((user: User) => user.email === email);
 }
 
+export const findById = (userId: string) => {
+    return users.find((user: User) => user.id === userId);
+}
+
 
 export const getUsers = () => {
     return users
