@@ -13,6 +13,7 @@ import {MembersPage} from "./pages/MembersPage.tsx";
 import {AddExpensePage} from "./pages/AddExpensePage.tsx";
 import {ExpenseDetailPage} from "./pages/ExpenseDetailPage.tsx";
 import {ProtectedRoutes} from "./utils/ProtectedRoutes.tsx";
+import {AppLayout} from "./components/AppLayout/AppLayout.tsx";
 
 function App() {
     return (
@@ -23,16 +24,18 @@ function App() {
             <Route path='/register' element={<RegisterPage/>}/>
 
             <Route element={<ProtectedRoutes />} >
-                <Route path='/join' element={<JoinTripPage/>}/>
+                <Route element={<AppLayout/>}>
+                    <Route path='/join' element={<JoinTripPage/>}/>
 
-                <Route path='/trips' element={<TripsPage/>}/>
-                <Route path='/trips/new' element={<NewTripPage/>}/>
-                <Route path='/trips/:tripId' element={<TripExpensesPage/>}/>
-                <Route path='/trips/:tripId/settle' element={<SettlePage/>}/>
-                <Route path='/trips/:tripId/members' element={<MembersPage/>}/>
+                    <Route path='/trips' element={<TripsPage/>}/>
+                    <Route path='/trips/new' element={<NewTripPage/>}/>
+                    <Route path='/trips/:tripId' element={<TripExpensesPage/>}/>
+                    <Route path='/trips/:tripId/settle' element={<SettlePage/>}/>
+                    <Route path='/trips/:tripId/members' element={<MembersPage/>}/>
 
-                <Route path='/trips/:tripId/expenses/new' element={<AddExpensePage/>}/>
-                <Route path='/trips/:tripId/expenses/:expenseId' element={<ExpenseDetailPage/>}/>
+                    <Route path='/trips/:tripId/expenses/new' element={<AddExpensePage/>}/>
+                    <Route path='/trips/:tripId/expenses/:expenseId' element={<ExpenseDetailPage/>}/>
+                </Route>
             </Route>
 
             <Route path='/ui-kit' element={<UiKitPage/>}/>
