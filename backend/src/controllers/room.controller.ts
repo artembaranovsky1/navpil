@@ -8,9 +8,11 @@ type RoomParams = {
 };
 
 export const getRooms = (req: Request, res: Response) => {
-    const rooms = roomService.getAllRooms();
+    if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
 
-    res.json(rooms);
+    res.json(roomService.getRoomsForUser(req.user.id));
 };
 
 export const getRoom = (req: Request<RoomParams>, res: Response) => {
@@ -26,6 +28,10 @@ export const getRoom = (req: Request<RoomParams>, res: Response) => {
 }
 
 export const createRoom = (req: Request, res: Response) => {
+    if (!req.user) {
+        return res.status(401).json({error: 'Unauthorized'});
+    }
+
     const result = roomCreateSchema.safeParse(req.body);
 
     if (!result.success) {
@@ -37,7 +43,7 @@ export const createRoom = (req: Request, res: Response) => {
 
     const {name, description} = result.data;
 
-    const newRoom = roomService.createRoom(name, description);
+    const newRoom = roomService.createRoom(name, req.user.id, description);
 
     res.status(201).json(newRoom);
 }

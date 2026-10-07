@@ -3,7 +3,7 @@ import {HomePage} from "./pages/HomePage.tsx";
 import {NotFoundPage} from "./pages/NotFoundPage.tsx";
 import {UiKitPage} from "./pages/UiKitPage.tsx";
 import {LoginPage} from "./pages/LoginPage/LoginPage.tsx";
-import {RegisterPage} from "./pages/RegisterPage.tsx";
+import {RegisterPage} from "./pages/RegisterPage/RegisterPage.tsx";
 import {TripsPage} from "./pages/TripsPage.tsx";
 import {JoinTripPage} from "./pages/JoinTripPage.tsx";
 import {NewTripPage} from "./pages/NewTripPage.tsx";

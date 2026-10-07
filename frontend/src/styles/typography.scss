@@ -1,6 +1,44 @@
-$font-family: 'Geologica', system-ui, sans-serif;
+$font-family: 'Geologica Variable', system-ui, sans-serif;
+@use './color' as *;
 
 $weight-light: 300;
 $weight-regular: 400;
 $weight-medium: 500;
 $weight-semibold: 600;
+
+.text-h1 {
+  font-size: 56px;
+}
+
+.text-h6 {
+  font-weight: $weight-regular;
+  font-size: 30px;
+  letter-spacing: -0.8px
+}
+
+
+.text-h14 {
+  font-size: 17px;
+}
+
+.text-default {
+  font-size: 16px;
+}
+
+.text-small {
+  font-size: 14px;
+  color: #6B6B66
+}
+
+.text-body {
+  font-size: 13px;
+  //color: $muted
+}
+
+.text-link {
+  font-size: 14px;
+  color: $ink;
+  font-weight: $weight-medium;
+
+  text-decoration: underline;
+}

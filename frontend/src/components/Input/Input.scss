@@ -1,0 +1,31 @@
+@use '../../styles/color' as *;
+@use '../../styles/typography' as *;
+
+.input {
+  //width: 205px;
+  width: 100%;
+  height: 52px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  border: 1px solid #E2E2DD;
+  background: #FFFFFF;
+  padding: 0 16px;
+  font-size: 15px;
+  color:$ink;
+
+  &:hover {
+    box-shadow: 0 0 0 4px rgba(15,138,95,0.18)
+  }
+}
+
+.input-danger {
+  border: 1px solid $red;
+}
+
+.input-disabled {
+  border: 1px solid $divider;
+  background: $disabled-input-bg;
+  color: $disabled-input-text;
+}
+
+

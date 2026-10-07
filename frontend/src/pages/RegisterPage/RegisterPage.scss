@@ -1,0 +1,100 @@
+@use '../../styles/color' as *;
+@use '../../styles/typography' as *;
+
+.register-page {
+  display: flex;
+}
+
+.register-page__left {
+  flex: 1;
+  display: flex;
+}
+
+.register-page__right {
+  display: flex;
+  width: 770px;
+  //width: 50%;
+  height: 100vh;
+  background-color: $ink
+}
+
+.register-page__right-content {
+  display: flex;
+  flex-direction: column;
+  margin: 48px 64px;
+  width: 520px;
+}
+
+.register-page__logo {
+  background: url('/navpil-logo-white.png') no-repeat center / contain;
+  width: 120px;
+  aspect-ratio: 1740 / 520;
+}
+
+.register-page__right-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.register-page__right-main-text {
+  color: $surface;
+  font-weight: $weight-light;
+  letter-spacing: -2px;
+  line-height: 1.05
+}
+
+.register-page__right-second-text {
+  color: $disabled-text;
+  font-weight: $weight-light;
+  line-height: 1.55;
+
+  margin-top: 20px;
+}
+
+.register-page__right-diagrama {
+  width: 420px;
+  height: 110px;
+  background-color: #1C1C1B;
+  padding: 22px;
+  border-radius: 22px;
+
+  margin-top: 48px;
+}
+
+.register-page__right-add-text {
+  color: $disabled-text;
+  font-weight: $weight-light;
+}
+
+.register-page__point-list {
+  margin-top: 40px;
+}
+
+.register-page__point {
+  display: flex;
+  align-items: center;
+  margin-top: 22px;
+
+}
+
+.register-page__point-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  background: #1C1C1B;
+  border: 1px solid #2A2A28;
+  flex-shrink: 0;
+  color: #4FC79A;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+}
+
+.register-page__point-text-field {
+  color: #fff;
+  gap: 4px
+}
