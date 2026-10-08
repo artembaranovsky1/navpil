@@ -1,3 +1,19 @@
+export type RoomStatus = 'active' | 'upcoming' | 'past';
+
+export type RoomMemberResponse = {
+    id: string;
+    name: string;
+    role: RoomMember['role']
+}
+
+export type RoomResponse = Room & {
+    members: RoomMemberResponse[];
+    status: RoomStatus;
+};
+
+
+export type RoomsGroupedResponse = Record<RoomStatus, RoomResponse[]>;
+
 export type User = {
     id: string;
     email: string;
@@ -10,6 +26,8 @@ export type Room = {
     id: string;
     name: string;
     description?: string; // необов'язкове поле
+    startDate?: string;
+    endDate?: string;
     createdAt: Date;
 };
 

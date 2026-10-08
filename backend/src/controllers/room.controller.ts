@@ -24,7 +24,7 @@ export const getRoom = (req: Request<RoomParams>, res: Response) => {
         return res.status(404).json({error: 'Room not found'});
     }
 
-    res.status(200).json(foundRoom);
+    res.status(200).json(roomService.toRoomResponse(foundRoom));
 }
 
 export const createRoom = (req: Request, res: Response) => {
@@ -41,11 +41,9 @@ export const createRoom = (req: Request, res: Response) => {
         });
     }
 
-    const {name, description} = result.data;
+    const newRoom = roomService.createRoom(req.user.id, result.data);
 
-    const newRoom = roomService.createRoom(name, req.user.id, description);
-
-    res.status(201).json(newRoom);
+    res.status(201).json(roomService.toRoomResponse(newRoom));
 }
 
 export const updateRoom = (req: Request<RoomParams>, res: Response) => {
@@ -68,9 +66,12 @@ export const updateRoom = (req: Request<RoomParams>, res: Response) => {
         return res.status(404).json({error: 'Room not found'});
     }
 
-    const editRoom = roomService.updateRoom(foundRoom, roomId, name, description)
+    const startDate = result.data.startDate ?? foundRoom.startDate;
+    const endDate = result.data.endDate ?? foundRoom.endDate;
 
-    res.status(200).json(editRoom);
+    const editRoom = roomService.updateRoom(foundRoom, result.data)
+
+    res.status(200).json(roomService.toRoomResponse(editRoom));
 }
 
 export const deleteRoom = (req: Request<RoomParams>, res: Response) => {

@@ -1,7 +1,7 @@
 import './Menu.scss'
 import {useEffect, useState} from "react";
 import {Link, NavLink, useLocation} from "react-router";
-import {getTrips, type TripResponse} from "../../api/trips.ts";
+import {flattenTrips, getTrips, type TripResponse} from "../../api/trips.ts";
 import {MenuUser} from "./component/MenuUser.tsx";
 
 const navLinkClass = ({isActive}: { isActive: boolean }) =>
@@ -12,10 +12,12 @@ export const Menu = () => {
     const {pathname} = useLocation()
 
     useEffect(() => {
-        getTrips().then(setTrips).catch(() => setTrips([]))
+        getTrips()
+            .then((data) => setTrips(flattenTrips(data)))
+            .catch(() => setTrips([]))
     }, [pathname]);
 
-
+    console.log(trips)
 
     return (
         <div className='trip-menu'>
@@ -35,7 +37,7 @@ export const Menu = () => {
                 <div className='trip-menu__travel-list'></div>
                 {trips.map((item) => (
                     <Link key={item.id} to={`/trips/${item.id}`} className='trip-menu__travel text-h15'>
-                        {item.name}
+                        {item.name} {item.startDate} {item.endDate} {item.members[0]?.name}
                     </Link>
                 ))}
             </div>

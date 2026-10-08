@@ -57,6 +57,9 @@ export const RegisterForm = () => {
                         disabled={isLoading}
                         required
                     />
+                    {fieldErrors.name && (
+                        <p className="login-page__error text-small">{fieldErrors.name[0]}</p>
+                    )}
                 </div>
 
                 <div className="login-form__field">
@@ -71,6 +74,9 @@ export const RegisterForm = () => {
                         disabled={isLoading}
                         required
                     />
+                    {fieldErrors.email && (
+                        <p className="login-page__error text-small">{fieldErrors.email[0]}</p>
+                    )}
                 </div>
                 <div className="login-form__field">
                     <div className='text-body'>Password</div>
@@ -84,6 +90,9 @@ export const RegisterForm = () => {
                         disabled={isLoading}
                         required
                     />
+                    {fieldErrors.password && (
+                        <p className="login-page__error text-small">{fieldErrors.password[0]}</p>
+                    )}
                 </div>
                 {error && (
                     <p className="login-page__error" role="alert">

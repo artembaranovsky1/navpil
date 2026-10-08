@@ -1,4 +1,4 @@
-import {getTrips, type TripResponse} from "../../api/trips.ts";
+import {flattenTrips, getTrips, type TripResponse} from "../../api/trips.ts";
 import {useEffect, useState} from "react";
 
 
@@ -11,7 +11,7 @@ export const TripsPage = () => {
         const loadTrips = async () => {
             try {
                 const data = await getTrips()
-                setTrips(data)
+                setTrips(flattenTrips(data))
             } catch {
                 setError('Не вдалося завантажити подорожі')
             } finally {
@@ -34,6 +34,15 @@ export const TripsPage = () => {
         return <p>Ще жодної подорожі</p>;
     }
 
+    const now = new Date();
+
+    const formattedDate: string = now.toLocaleDateString('uk-UA', {
+        weekday: 'long',   // день тижня (наприклад, "середа")
+        month: 'long',     // місяц ("жовтня")
+        day: 'numeric'     // день ("7")
+    });
+
     return <div>
+        <div>{formattedDate}</div>
     </div>
 };

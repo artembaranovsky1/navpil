@@ -1,19 +1,17 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router";
-import { Button } from "../components/Button/Button.tsx";
-import { createTrip } from "../api/trips.ts";
-import { ApiError } from "../api/ApiError.ts";
-
-// Мають збігатися з roomCreateSchema на бекенді
-// const NAME_MIN = 1;
-// const NAME_MAX = 100;
-// const DESCRIPTION_MAX = 500;
+import '../NewTripPage/NewTripPage.scss';
+import {useState} from "react";
+import {Link, useNavigate} from "react-router";
+import {Button} from "../../components/Button/Button.tsx";
+import {createTrip} from "../../api/trips.ts";
+import {ApiError} from "../../api/ApiError.ts";
 
 type FieldErrors = Record<string, string[]>;
 
 export const NewTripPage = () => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
     const [error, setError] = useState('');
     const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
     const [isLoading, setIsLoading] = useState(false);
@@ -27,15 +25,20 @@ export const NewTripPage = () => {
         setIsLoading(true);
 
         try {
-            await createTrip(name.trim(), description.trim() || undefined);
+            await createTrip({
+                name: name.trim(),
+                description: description.trim() || undefined,
+                startDate: startDate || undefined,
+                endDate: endDate || undefined,
+            });
 
-            navigate('/trips', { replace: true });
+            navigate('/trips', {replace: true});
         } catch (err) {
             if (err instanceof ApiError && err.status === 422) {
                 setFieldErrors((err.details ?? {}) as FieldErrors);
             } else if (err instanceof ApiError && err.status === 401) {
                 localStorage.removeItem('token');
-                navigate('/login', { replace: true });
+                navigate('/login', {replace: true});
             } else if (err instanceof ApiError) {
                 setError('Не вдалося створити подорож, спробуйте ще раз');
             } else {
@@ -45,6 +48,7 @@ export const NewTripPage = () => {
             setIsLoading(false);
         }
     };
+
 
     return (
         <div className="new-trip">
@@ -61,8 +65,7 @@ export const NewTripPage = () => {
                         value={name}
                         onChange={(event) => setName(event.target.value)}
                         disabled={isLoading}
-                        // minLength={NAME_MIN}
-                        // maxLength={NAME_MAX}
+
                         required
                     />
                     {fieldErrors.name && (
@@ -81,11 +84,45 @@ export const NewTripPage = () => {
                         value={description}
                         onChange={(event) => setDescription(event.target.value)}
                         disabled={isLoading}
-                        // maxLength={DESCRIPTION_MAX}
                     />
                     {fieldErrors.description && (
                         <p className="new-trip__field-error text-small">{fieldErrors.description[0]}</p>
                     )}
+                </div>
+
+                <div className="new-trip__fields-data">
+                    <div className="new-trip__field-data">
+                        <label className="text-body" htmlFor="new-trip-startDate">
+                            Початок
+                        </label>
+                        <input
+                            id="new-trip-startDate"
+                            className="input new-trip__textarea"
+                            type="date"
+                            value={startDate}
+                            onChange={(event) => setStartDate(event.target.value)}
+                            disabled={isLoading}
+                        />
+                        {fieldErrors.startDate && (
+                            <p className="new-trip__field-error text-small">{fieldErrors.startDate[0]}</p>
+                        )}
+                    </div>
+                    <div className="new-trip__field-data">
+                        <label className="text-body" htmlFor="new-trip-endDate">
+                            Кінець
+                        </label>
+                        <input
+                            id="new-trip-endDate"
+                            className="input new-trip__textarea"
+                            type="date"
+                            value={endDate}
+                            onChange={(event) => setEndDate(event.target.value)}
+                            disabled={isLoading}
+                        />
+                        {fieldErrors.endDate && (
+                            <p className="new-trip__field-error text-small">{fieldErrors.endDate[0]}</p>
+                        )}
+                    </div>
                 </div>
 
                 {error && (

@@ -6,7 +6,7 @@ import {LoginPage} from "./pages/LoginPage/LoginPage.tsx";
 import {RegisterPage} from "./pages/RegisterPage/RegisterPage.tsx";
 import {TripsPage} from "./pages/TripsPage/TripsPage.tsx";
 import {JoinTripPage} from "./pages/JoinTripPage.tsx";
-import {NewTripPage} from "./pages/NewTripPage.tsx";
+import {NewTripPage} from "./pages/NewTripPage/NewTripPage.tsx";
 import {TripExpensesPage} from "./pages/TripExpensesPage.tsx";
 import {SettlePage} from "./pages/SettlePage.tsx";
 import {MembersPage} from "./pages/MembersPage.tsx";
