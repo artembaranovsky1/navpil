@@ -3,7 +3,7 @@ import '../../components/Input/Input.scss'
 import {LoginForm} from "../../components/LoginForm/LoginForm.tsx";
 
 export const LoginPage = () => {
-    return <div className="content">
+    return <div>
         <div className="register-page">
             <div className="register-page__right">
                 <div className="register-page__right-content">

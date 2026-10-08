@@ -96,6 +96,19 @@
     }
   }
 
+  &--white {
+    background: #FFF;
+    color: $ink;
+
+    &:hover:not(:disabled) {
+      background: $ghost-hover;
+    }
+
+    &:active:not(:disabled) {
+      background: $ghost-pressed;
+    }
+  }
+
   &--danger {
     background: transparent;
     border-color: $field-border;

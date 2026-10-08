@@ -20,3 +20,18 @@ export const getMe = async (): Promise<User> => {
 
     return response.json();
 }
+
+
+// export const getUser = async (userId: string): Promise<User> => {
+//     const token = localStorage.getItem('token');
+//
+//     const response = await fetch(`${API_URL}/users/${userId}`, {
+//         headers: { Authorization: `Bearer ${token}` },
+//     })
+//
+//     if (!response.ok) {
+//         throw new ApiError(response.status, 'get user failed', null);
+//     }
+//
+//     return response.json();
+// }

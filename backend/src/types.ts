@@ -45,5 +45,7 @@ export type Item = {
     quantity: number;
     price: number;
     addedById: string;
+    date: string;
+    splitBetween: string[];
     createdAt: Date;
 };

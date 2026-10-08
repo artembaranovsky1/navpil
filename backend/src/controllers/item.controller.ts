@@ -46,6 +46,14 @@ export const createItem = (req: Request<RoomParams>, res: Response) => {
 
     const { roomId } = req.params;
 
+    if (!roomService.getRoomById(roomId)) {
+        return res.status(404).json({ error: 'Room not found' });
+    }
+
+    if (!roomService.isMember(roomId, req.user.id)) {
+        return res.status(403).json({ error: 'You are not a member of this trip' });
+    }
+
     const result = itemCreateSchema.safeParse(req.body);
 
     if (!result.success) {
@@ -55,13 +63,22 @@ export const createItem = (req: Request<RoomParams>, res: Response) => {
         });
     }
 
-    if (!roomService.getRoomById(roomId)) {
-        return res.status(404).json({ error: 'Room not found' });
+    // Якщо учасників не вказано — витрата ділиться на всіх у подорожі
+    const splitBetween = result.data.splitBetween
+        ?? roomService.getMemberOfRoom(roomId).map((member) => member.id);
+
+    const strangers = splitBetween.filter(
+        (userId) => !roomService.isMember(roomId, userId),
+    );
+
+    if (strangers.length > 0) {
+        return res.status(422).json({
+            error: 'Validation failed',
+            details: { splitBetween: ['Можна ділити лише між учасниками подорожі'] },
+        });
     }
 
-    const { name, quantity, price } = result.data;
-
-    const newItem = itemService.createItem(roomId, name, quantity, price, req.user.id);
+    const newItem = itemService.createItem(roomId, req.user.id, {...result.data, splitBetween});
 
     res.status(201).json(newItem);
 };

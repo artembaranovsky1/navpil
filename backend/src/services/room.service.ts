@@ -93,7 +93,9 @@ export const getRoomsForUser = (userId: string): RoomsGroupedResponse => {
     return grouped;
 };
 
-
+export const isMember = (roomId: string, userId: string)=> {
+    return roomMembers.some((member) => member.userId === userId && member.roomId === roomId);
+}
 
 export const findIndex = (roomId: string) => {
     return rooms.findIndex((room: Room) => room.id === roomId);

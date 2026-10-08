@@ -5,7 +5,7 @@ import {RegisterForm} from "../../components/RegisterForm/RegisterForm.tsx";
 export const RegisterPage = () => {
 
 
-    return <div className="content">
+    return <div>
         <div className="register-page">
             <div className="register-page__right">
                 <div className="register-page__right-content">

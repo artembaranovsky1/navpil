@@ -1,4 +1,5 @@
 import {Item, Room} from "../types.js";
+import {ItemCreateInput} from "../validation/item.validation.js";
 
 const items: Item[] = [];
 
@@ -20,18 +21,16 @@ export const findItemInRoom = (roomId: string, itemId: string): Item | undefined
 
 export const createItem = (
     roomId: string,
-    name: string,
-    quantity: number,
-    price: number,
     addedById: string,
+    data: ItemCreateInput,
 ): Item => {
     const newItem: Item = {
         id: crypto.randomUUID(),
         roomId,
-        name: name.trim(),
-        quantity,
-        price,
         addedById,
+        ...data,
+        quantity: data.quantity ?? 1,
+        splitBetween: data.splitBetween ?? [],
         createdAt: new Date(),
     };
 
@@ -48,6 +47,8 @@ export const updateItem = (foundItem: Item, newName: string | undefined, newQuan
         quantity: newQuantity !== undefined ? newQuantity : foundItem.quantity,
         price: newPrice !== undefined ? newPrice : foundItem.price,
         addedById: foundItem.addedById,
+        date: foundItem.date,
+        splitBetween: foundItem.splitBetween,
         createdAt: foundItem.createdAt,
     }
 

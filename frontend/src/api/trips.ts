@@ -52,6 +52,22 @@ export const getTrips = async (): Promise<TripsResponse> => {
     return response.json();
 }
 
+export const getTrip = async (tripId): Promise<TripsResponse> => {
+    const token = localStorage.getItem('token');
+
+    const response = await fetch(`${API_URL}/rooms/${tripId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new ApiError(response.status, data.error ?? 'get trip failed', data.details);
+    }
+
+    return data;
+}
+
 export const createTrip = async (tripData: CreateTripData): Promise<TripResponse>  => {
     const token = localStorage.getItem('token');
 
