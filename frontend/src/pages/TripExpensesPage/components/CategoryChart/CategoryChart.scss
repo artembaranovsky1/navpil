@@ -1,0 +1,64 @@
+@use '../../../../styles/color' as *;
+
+.category-chart {
+  padding: 20px 24px;
+  background: $surface;
+  border: 1px solid $divider;
+  border-radius: 20px;
+}
+
+.category-chart__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.category-chart__empty {
+  margin: 16px 0 0;
+  font-size: 14px;
+  color: #6B6B66;
+}
+
+.category-chart__content {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.category-chart__donut {
+  flex-shrink: 0;
+}
+
+.category-chart__legend {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.category-chart__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.category-chart__dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
+.category-chart__name {
+  flex: 1;
+}
+
+.category-chart__amount {
+  color: #6B6B66;
+}

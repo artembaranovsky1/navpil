@@ -37,6 +37,14 @@ export const roomUpdateSchema = z
         path: ['endDate'],
     });
 
+export const joinRoomSchema = z.object({
+    code: z
+        .string()
+        .trim()
+        .toUpperCase()
+        .length(6, 'Код має містити 6 символів'),
+});
+
 export const roomResponseSchema = z
     .object({
         id: z.uuid().openapi({example: '14e07f1d-0fb0-43bc-bc87-4e538ba59591'}),

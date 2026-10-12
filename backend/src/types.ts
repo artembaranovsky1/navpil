@@ -28,6 +28,7 @@ export type Room = {
     description?: string; // необов'язкове поле
     startDate?: string;
     endDate?: string;
+    inviteCode: string;
     createdAt: Date;
 };
 
@@ -38,14 +39,37 @@ export type RoomMember = {
     joinedAt: Date;
 };
 
+export const ITEM_CATEGORIES = [
+    'food',
+    'transport',
+    'housing',
+    'entertainment',
+    'shopping',
+    'other',
+] as const;
+
+export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
+
 export type Item = {
     id: string;
     roomId: string;
     name: string;
-    quantity: number;
-    price: number;
+    description?: string;
+    amount: number;
+    category: ItemCategory;
     addedById: string;
+    paidById: string;
     date: string;
     splitBetween: string[];
+    createdAt: Date;
+};
+
+export type Payment = {
+    id: string;
+    roomId: string;
+    fromId: string;
+    toId: string;
+    amount: number;
+    createdById: string;
     createdAt: Date;
 };

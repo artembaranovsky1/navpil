@@ -1,6 +1,10 @@
 import {Room, RoomMember, RoomMemberResponse, RoomResponse, RoomsGroupedResponse, RoomStatus} from '../types.js';
 import {RoomCreateInput} from "../validation/room.validation.js";
 import * as userService from "./user.service.js";
+import { randomInt } from 'node:crypto';
+
+const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const CODE_LENGTH = 6;
 
 const rooms: Room[] = [];
 const roomMembers: RoomMember[] = [];
@@ -27,6 +31,7 @@ export const createRoom = (ownerId: string, data: RoomCreateInput): Room => {
         description: data.description,
         startDate: data.startDate,
         endDate: data.endDate,
+        inviteCode: generateInviteCode(),
         createdAt: new Date(),
     };
 
@@ -97,8 +102,25 @@ export const isMember = (roomId: string, userId: string)=> {
     return roomMembers.some((member) => member.userId === userId && member.roomId === roomId);
 }
 
+const generateInviteCode = (): string => {
+    let code: string;
+
+    do {
+        code = '';
+        for (let i = 0; i < CODE_LENGTH; i++) {
+            code += CODE_ALPHABET[randomInt(CODE_ALPHABET.length)];
+        }
+    } while (rooms.some((room) => room.inviteCode === code)); // раптом такий уже є
+
+    return code;
+};
+
 export const findIndex = (roomId: string) => {
     return rooms.findIndex((room: Room) => room.id === roomId);
+}
+
+export const findRoomByCode = (code: string): Room | undefined => {
+    return rooms.find(room => room.inviteCode === code);
 }
 
 export const deleteRoom = (index: number) => {

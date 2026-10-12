@@ -1,0 +1,30 @@
+@use '../../../../styles/color' as *;
+
+.settle-link {
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-radius: 20px;
+  background: $ink;
+  color: $surface;
+  text-decoration: none;
+
+  &:hover {
+    background: $ink-hover;
+  }
+}
+
+.settle-link__title {
+  display: block;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.settle-link__note {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: #B5B5AF;
+}

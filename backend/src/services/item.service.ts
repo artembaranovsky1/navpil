@@ -1,4 +1,4 @@
-import {Item, Room} from "../types.js";
+import {Item, ItemCategory} from "../types.js";
 import {ItemCreateInput} from "../validation/item.validation.js";
 
 const items: Item[] = [];
@@ -29,7 +29,7 @@ export const createItem = (
         roomId,
         addedById,
         ...data,
-        quantity: data.quantity ?? 1,
+        paidById: data.paidById ?? addedById,
         splitBetween: data.splitBetween ?? [],
         createdAt: new Date(),
     };
@@ -39,14 +39,16 @@ export const createItem = (
     return newItem;
 };
 
-export const updateItem = (foundItem: Item, newName: string | undefined, newQuantity: number | undefined, newPrice: number | undefined) => {
+export const updateItem = (foundItem: Item, newName: string | undefined, newAmount: number | undefined, newCategory: ItemCategory | undefined) => {
     const newItem: Item = {
         id: foundItem.id,
         roomId: foundItem.roomId,
         name: newName !== undefined ? newName : foundItem.name,
-        quantity: newQuantity !== undefined ? newQuantity : foundItem.quantity,
-        price: newPrice !== undefined ? newPrice : foundItem.price,
+        description: foundItem.description,
+        amount: newAmount !== undefined ? newAmount : foundItem.amount,
+        category: newCategory !== undefined ? newCategory : foundItem.category,
         addedById: foundItem.addedById,
+        paidById: foundItem.paidById,
         date: foundItem.date,
         splitBetween: foundItem.splitBetween,
         createdAt: foundItem.createdAt,

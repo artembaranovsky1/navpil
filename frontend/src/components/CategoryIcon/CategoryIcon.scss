@@ -1,0 +1,34 @@
+@use '../../styles/color' as *;
+
+.category-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #EDEDEA;
+  color: $ink;
+
+  &--md {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+  }
+
+  &--lg {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+  }
+
+  &--food,
+  &--shopping {
+    background: #E8F3EE;
+    color: $green;
+  }
+
+  &--transport,
+  &--other {
+    background: #F1F1EE;
+    color: #55554F;
+  }
+}

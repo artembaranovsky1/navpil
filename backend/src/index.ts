@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express, {type Request, type Response} from 'express';
 import roomRoutes from './routes/room.routes.js';
 import itemRoutes from './routes/item.routes.js';
+import paymentRoutes from './routes/payment.routes.js';
 import userRoutes from "./routes/user.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import swaggerUi from "swagger-ui-express";
@@ -29,6 +30,7 @@ app.get('/health', (req: Request, res: Response) => {
 app.use('/auth', authRoutes);
 app.use('/rooms', roomRoutes);
 app.use('/rooms', verifyToken, itemRoutes);
+app.use('/rooms', verifyToken, paymentRoutes);
 app.use('/users', verifyToken, userRoutes);
 
 app.listen(PORT, () => {

@@ -37,7 +37,7 @@ export const Menu = () => {
                 <div className='trip-menu__travel-list'></div>
                 {trips.map((item) => (
                     <Link key={item.id} to={`/trips/${item.id}`} className='trip-menu__travel text-h15'>
-                        {item.name} {item.startDate} {item.endDate} {item.members[0]?.name}
+                        {item.name} {item.inviteCode}
                     </Link>
                 ))}
             </div>

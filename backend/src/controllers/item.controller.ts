@@ -20,6 +20,10 @@ export const getItems = (req: Request<RoomParams>, res: Response) => {
         return res.status(404).json({ error: 'Room not found' });
     }
 
+    if (!req.user || !roomService.isMember(roomId, req.user.id)) {
+        return res.status(403).json({ error: 'You are not a member of this trip' });
+    }
+
     res.json(itemService.getItemsByRoomId(roomId));
 };
 
@@ -28,6 +32,10 @@ export const getItem = (req: Request<ItemParams>, res: Response) => {
 
     if (!roomService.getRoomById(roomId)) {
         return res.status(404).json({ error: 'Room not found' });
+    }
+
+    if (!req.user || !roomService.isMember(roomId, req.user.id)) {
+        return res.status(403).json({ error: 'You are not a member of this trip' });
     }
 
     const item = itemService.findItemInRoom(roomId, itemId);
@@ -78,7 +86,16 @@ export const createItem = (req: Request<RoomParams>, res: Response) => {
         });
     }
 
-    const newItem = itemService.createItem(roomId, req.user.id, {...result.data, splitBetween});
+    const paidById = result.data.paidById ?? req.user.id;
+
+    if (!roomService.isMember(roomId, paidById)) {
+        return res.status(422).json({
+            error: 'Validation failed',
+            details: { paidById: ['Платити може лише учасник подорожі'] },
+        });
+    }
+
+    const newItem = itemService.createItem(roomId, req.user.id, {...result.data, paidById, splitBetween});
 
     res.status(201).json(newItem);
 };
@@ -117,6 +134,10 @@ export const deleteItem = (req: Request<ItemParams>, res: Response) => {
 
     if (!roomService.getRoomById(roomId)) {
         return res.status(404).json({ error: 'Room not found' });
+    }
+
+    if (!req.user || !roomService.isMember(roomId, req.user.id)) {
+        return res.status(403).json({ error: 'You are not a member of this trip' });
     }
 
     const item = itemService.findItemInRoom(roomId, itemId);

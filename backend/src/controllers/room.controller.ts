@@ -1,6 +1,6 @@
 import {Request, Response} from 'express';
 import * as roomService from "../services/room.service.js";
-import {roomCreateSchema, roomUpdateSchema} from "../validation/room.validation.js";
+import {joinRoomSchema, roomCreateSchema, roomUpdateSchema} from "../validation/room.validation.js";
 import * as z from "zod";
 
 type RoomParams = {
@@ -24,6 +24,10 @@ export const getRoom = (req: Request<RoomParams>, res: Response) => {
         return res.status(404).json({error: 'Room not found'});
     }
 
+    if (!req.user || !roomService.isMember(roomId, req.user.id)) {
+        return res.status(403).json({error: 'You are not a member of this trip'});
+    }
+
     res.status(200).json(roomService.toRoomResponse(foundRoom));
 }
 
@@ -44,6 +48,33 @@ export const createRoom = (req: Request, res: Response) => {
     const newRoom = roomService.createRoom(req.user.id, result.data);
 
     res.status(201).json(roomService.toRoomResponse(newRoom));
+}
+
+export const joinRoom = (req: Request, res: Response) => {
+    if (!req.user) {
+        return res.status(401).json({error: 'Unauthorized'});
+    }
+
+    const result = joinRoomSchema.safeParse(req.body);
+
+    if (!result.success) {
+        return res.status(422).json({
+            error: 'Validation failed',
+            details: z.flattenError(result.error).fieldErrors,
+        });
+    }
+
+    const room = roomService.findRoomByCode(result.data.code);
+
+    if (!room) {
+        return res.status(404).json({error: 'Invalid invite code'});
+    }
+
+    if (!roomService.isMember(room.id, req.user.id)) {
+        roomService.addMember(room.id, req.user.id, 'member')
+    }
+
+    res.status(200).json(roomService.toRoomResponse(room));
 }
 
 export const updateRoom = (req: Request<RoomParams>, res: Response) => {

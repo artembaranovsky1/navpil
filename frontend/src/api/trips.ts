@@ -18,6 +18,7 @@ export type TripResponse = {
     createdAt: string;
     members: TripMember[];
     status: TripStatus;
+    inviteCode: string
 }
 
 export type TripsResponse = {
@@ -52,7 +53,7 @@ export const getTrips = async (): Promise<TripsResponse> => {
     return response.json();
 }
 
-export const getTrip = async (tripId): Promise<TripsResponse> => {
+export const getTrip = async (tripId: string): Promise<TripResponse> => {
     const token = localStorage.getItem('token');
 
     const response = await fetch(`${API_URL}/rooms/${tripId}`, {
@@ -84,6 +85,27 @@ export const createTrip = async (tripData: CreateTripData): Promise<TripResponse
 
     if (!response.ok) {
         throw new ApiError(response.status, data.error ?? 'createTrip failed', data.details);
+    }
+
+    return data;
+}
+
+export const joinTrip = async (code: string): Promise<TripResponse> => {
+    const token = localStorage.getItem('token');
+
+    const response = await fetch(`${API_URL}/rooms/join`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({code})
+    })
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new ApiError(response.status, data.error ?? 'join failed', data.details);
     }
 
     return data;

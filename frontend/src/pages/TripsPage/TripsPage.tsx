@@ -6,6 +6,7 @@ import {Button} from "../../components/Button/Button.tsx";
 import {useNavigate} from "react-router";
 import {ActiveBlock} from "./components/ActiveBlock.tsx";
 import {Trip} from "./components/Trip.tsx";
+import {formattedDate} from "../../../function/date.tsx";
 
 
 export const TripsPage = () => {
@@ -36,7 +37,7 @@ export const TripsPage = () => {
 
     const activeTrips: TripResponse[] = trips.filter((trip) => trip.status === "active")
     const pastTrips = trips.filter((trip) => trip.status === "past")
-    const upcommingTrips = trips.filter((trip) => trip.status === "upcoming")
+    const upcomingTrips = trips.filter((trip) => trip.status === "upcoming")
 
     if (isLoading) {
         return <p>Завантаження…</p>;
@@ -46,17 +47,13 @@ export const TripsPage = () => {
         return <p role="alert">{error}</p>;
     }
 
-    if (trips.length === 0) {
-        return <p>Ще жодної подорожі</p>;
-    }
-
-    const now = new Date();
-
-    const formattedDate: string = now.toLocaleDateString('uk-UA', {
-        weekday: 'long',   // день тижня (наприклад, "середа")
-        month: 'long',     // місяц ("жовтня")
-        day: 'numeric'     // день ("7")
-    });
+    // const now = new Date();
+    //
+    // const formattedDate: string = now.toLocaleDateString('uk-UA', {
+    //     weekday: 'long',   // день тижня (наприклад, "середа")
+    //     month: 'long',     // місяц ("жовтня")
+    //     day: 'numeric'     // день ("7")
+    // });
 
     return <div className="content">
         <div className="my-trip__info">
@@ -94,7 +91,7 @@ export const TripsPage = () => {
         <div className='my-trip__upcomming'>
             <div className='my-trip__active-text'>Майбутні</div>
             <div className='my-trip__list'>
-                {upcommingTrips.map((trip) => (
+                {upcomingTrips.map((trip) => (
                     <Trip key={trip.id} trip={trip}/>
                 ))}
             </div>

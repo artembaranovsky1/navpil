@@ -1,0 +1,15 @@
+@use '../../styles/color' as *;
+
+.settle-page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 40px 40px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  @media (max-width: 600px) {
+    padding: 24px 16px;
+  }
+}

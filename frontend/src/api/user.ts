@@ -3,6 +3,7 @@ import {ApiError} from "./ApiError.ts";
 const API_URL = import.meta.env.VITE_API_URL;
 
 export type User = {
+    id: string;
     name: string;
     email: string;
 }
@@ -22,16 +23,16 @@ export const getMe = async (): Promise<User> => {
 }
 
 
-// export const getUser = async (userId: string): Promise<User> => {
-//     const token = localStorage.getItem('token');
-//
-//     const response = await fetch(`${API_URL}/users/${userId}`, {
-//         headers: { Authorization: `Bearer ${token}` },
-//     })
-//
-//     if (!response.ok) {
-//         throw new ApiError(response.status, 'get user failed', null);
-//     }
-//
-//     return response.json();
-// }
+export const getUser = async (userId: string): Promise<User> => {
+    const token = localStorage.getItem('token');
+
+    const response = await fetch(`${API_URL}/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!response.ok) {
+        throw new ApiError(response.status, 'get user failed', null);
+    }
+
+    return response.json();
+}

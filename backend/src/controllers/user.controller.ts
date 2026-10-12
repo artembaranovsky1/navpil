@@ -38,7 +38,7 @@ export const getMe = (req: Request, res: Response) => {
         return res.status(404).send({error: 'User not found'})
     }
 
-    res.status(200).json(user)
+    res.status(200).json(userService.toUserResponse(user))
 }
 
 export const createUser = async (req: Request, res: Response) => {

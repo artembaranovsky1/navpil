@@ -1,0 +1,85 @@
+@use '../../styles/color' as *;
+
+.trip-header {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.trip-header__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.trip-header__breadcrumbs {
+  font-size: 13px;
+  color: #6B6B66;
+}
+
+.trip-header__breadcrumb-link {
+  color: #6B6B66;
+  text-decoration: none;
+
+  &:hover {
+    color: $ink;
+  }
+}
+
+.trip-header__title {
+  margin: 6px 0 0;
+  font-size: 38px;
+  font-weight: 400;
+  letter-spacing: -1.2px;
+}
+
+.trip-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.trip-header__add {
+  height: 44px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  border-radius: 22px;
+  background: $ink;
+  color: $surface;
+  font-family: 'Geologica', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    background: $ink-hover;
+  }
+}
+
+.trip-header__tabs {
+  display: flex;
+  gap: 28px;
+  border-bottom: 1px solid $divider;
+}
+
+.trip-header__tab {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  color: #6B6B66;
+  text-decoration: none;
+
+  &--active {
+    margin-bottom: -1px;
+    border-bottom: 2px solid $ink;
+    color: $ink;
+    font-weight: 600;
+  }
+}

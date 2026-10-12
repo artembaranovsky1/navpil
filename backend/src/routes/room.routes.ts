@@ -7,6 +7,7 @@ const router = Router()
 router.get('/', verifyToken,roomController.getRooms);
 router.get('/:roomId', verifyToken, roomController.getRoom);
 router.post('/', verifyToken, roomController.createRoom);
+router.post('/join', verifyToken, roomController.joinRoom);
 router.patch('/:roomId', verifyToken, roomController.updateRoom);
 router.delete('/:roomId', verifyToken, roomController.deleteRoom);
 

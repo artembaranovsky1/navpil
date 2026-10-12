@@ -1,0 +1,46 @@
+@use '../../../../styles/color' as *;
+
+.paid-by-members {
+  padding: 20px 24px;
+  background: $surface;
+  border: 1px solid $divider;
+  border-radius: 20px;
+}
+
+.paid-by-members__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.paid-by-members__list {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.paid-by-members__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.paid-by-members__amount {
+  font-weight: 500;
+}
+
+.paid-by-members__track {
+  margin-top: 6px;
+  height: 8px;
+  border-radius: 4px;
+  background: #F1F1EE;
+  overflow: hidden;
+}
+
+.paid-by-members__fill {
+  height: 100%;
+  border-radius: 4px;
+  background: $ink;
+}
