@@ -11,14 +11,14 @@ export const itemCreateSchema = z
     .object({
         name: z.string().min(3).max(20).openapi({example: 'milk'}),
         description: z.string().trim().max(200, 'Опис занадто довгий').optional(),
-        amount: z.number({ error: 'Сума має бути числом' })
+        amount: z.number({error: 'Сума має бути числом'})
             .positive('Сума має бути більшою за 0')
             .max(1_000_000, 'Занадто велика сума'),
         category: z.enum(ITEM_CATEGORIES),
-        date: z.iso.date({ error: 'Дата має бути у форматі РРРР-ММ-ДД' }).optional().default(todayString),
+        date: z.iso.date({error: 'Дата має бути у форматі РРРР-ММ-ДД'}).optional().default(todayString),
         paidById: z.string().optional(),
         splitBetween: z
-            .array(z.string(), { error: 'Оберіть учасників' })
+            .array(z.string(), {error: 'Оберіть учасників'})
             .min(1, 'Оберіть хоча б одного учасника')
             .refine((ids) => new Set(ids).size === ids.length, {
                 error: 'Учасники не мають повторюватися',
@@ -27,8 +27,24 @@ export const itemCreateSchema = z
     })
     .openapi('CreateItemRequest');
 
-export const itemUpdateSchema = itemCreateSchema
-    .partial()
+export const itemUpdateSchema = z.object({
+    name: z.string().min(3).max(20).openapi({example: 'milk'}).optional(),
+    description: z.string().trim().max(200, 'Опис занадто довгий').optional(),
+    amount: z.number({error: 'Сума має бути числом'})
+        .positive('Сума має бути більшою за 0')
+        .max(1_000_000, 'Занадто велика сума')
+        .optional(),
+    category: z.enum(ITEM_CATEGORIES).optional(),
+    date: z.iso.date({error: 'Дата має бути у форматі РРРР-ММ-ДД'}).optional(),
+    paidById: z.string().optional(),
+    splitBetween: z
+        .array(z.string(), {error: 'Оберіть учасників'})
+        .min(1, 'Оберіть хоча б одного учасника')
+        .refine((ids) => new Set(ids).size === ids.length, {
+            error: 'Учасники не мають повторюватися'
+        })
+        .optional(),
+})
     .openapi('UpdateItemRequest');
 
 export const itemResponseSchema = z
@@ -36,7 +52,7 @@ export const itemResponseSchema = z
         id: z.uuid().openapi({example: '9b907f1d-0fb0-43bc-bc87-4e538ba5958b'}),
         roomId: z.uuid().openapi({example: '14e07f1d-0fb0-43bc-bc87-4e538ba59591'}),
         name: z.string().openapi({example: 'milk'}),
-        amount: z.number({ error: 'Сума має бути числом' })
+        amount: z.number({error: 'Сума має бути числом'})
             .positive('Сума має бути більшою за 0')
             .max(1_000_000, 'Занадто велика сума'),
         category: z.enum(ITEM_CATEGORIES),
@@ -55,3 +71,5 @@ export const itemParamsSchema = roomParamsSchema.extend({
 export type ItemResponse = z.infer<typeof itemResponseSchema>;
 
 export type ItemCreateInput = z.infer<typeof itemCreateSchema>;
+
+export type ItemUpdateInput = z.infer<typeof itemUpdateSchema>;

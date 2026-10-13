@@ -12,13 +12,14 @@ type ExpenseDetailProps = {
     members: TripMember[];
     currentUserId?: string;
     onClose: () => void;
+    onEdit: () => void;
     onDeleted: (expenseId: string) => void;
 }
 
 const formatTime = (date: string): string =>
     new Date(date).toLocaleTimeString('uk-UA', {hour: '2-digit', minute: '2-digit'});
 
-export const ExpenseDetail = ({tripId, expense, members, currentUserId, onClose, onDeleted}: ExpenseDetailProps) => {
+export const ExpenseDetail = ({tripId, expense, members, currentUserId, onClose, onEdit, onDeleted}: ExpenseDetailProps) => {
     const [isConfirmingDelete, setIsConfirmingDelete] = useState<boolean>(false);
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
     const [error, setError] = useState<string>('');
@@ -91,7 +92,7 @@ export const ExpenseDetail = ({tripId, expense, members, currentUserId, onClose,
                             <path d="M6 6l12 12M18 6L6 18"/>
                         </svg>
                     </button>
-                    <button type="button" className="expense-detail__edit">
+                    <button type="button" className="expense-detail__edit" onClick={onEdit}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                              strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/>

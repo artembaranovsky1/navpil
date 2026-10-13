@@ -1,8 +1,8 @@
-import type { Request, Response } from 'express';
+import type {Request, Response} from 'express';
 import * as z from 'zod';
 import * as roomService from '../services/room.service.js';
 import * as itemService from '../services/item.service.js';
-import { itemCreateSchema, itemUpdateSchema } from '../validation/item.validation.js';
+import {itemCreateSchema, itemUpdateSchema} from '../validation/item.validation.js';
 
 type RoomParams = {
     roomId: string;
@@ -13,53 +13,74 @@ type ItemParams = {
     itemId: string;
 };
 
-export const getItems = (req: Request<RoomParams>, res: Response) => {
-    const { roomId } = req.params;
+type FieldErrors = Record<string, string[]>;
 
-    if (!roomService.getRoomById(roomId)) {
-        return res.status(404).json({ error: 'Room not found' });
+const validateParticipants = async (
+    roomId: string,
+    paidById?: string,
+    splitBetween?: string[],
+): Promise<FieldErrors | null> => {
+    const memberIds = await roomService.getMemberIds(roomId);
+    const errors: FieldErrors = {};
+
+    if (paidById !== undefined && !memberIds.includes(paidById)) {
+        errors.paidById = ['Платити може лише учасник подорожі'];
     }
 
-    if (!req.user || !roomService.isMember(roomId, req.user.id)) {
-        return res.status(403).json({ error: 'You are not a member of this trip' });
+    if (splitBetween !== undefined && splitBetween.some((userId) => !memberIds.includes(userId))) {
+        errors.splitBetween = ['Можна ділити лише між учасниками подорожі'];
     }
 
-    res.json(itemService.getItemsByRoomId(roomId));
+    return Object.keys(errors).length > 0 ? errors : null;
 };
 
-export const getItem = (req: Request<ItemParams>, res: Response) => {
-    const { roomId, itemId } = req.params;
+export const getItems = async (req: Request<RoomParams>, res: Response) => {
+    const {roomId} = req.params;
 
-    if (!roomService.getRoomById(roomId)) {
-        return res.status(404).json({ error: 'Room not found' });
+    if (!(await roomService.getRoomById(roomId))) {
+        return res.status(404).json({error: 'Room not found'});
     }
 
-    if (!req.user || !roomService.isMember(roomId, req.user.id)) {
-        return res.status(403).json({ error: 'You are not a member of this trip' });
+    if (!req.user || !(await roomService.isMember(roomId, req.user.id))) {
+        return res.status(403).json({error: 'You are not a member of this trip'});
     }
 
-    const item = itemService.findItemInRoom(roomId, itemId);
+    res.json(await itemService.getItemsByRoomId(roomId));
+};
+
+export const getItem = async (req: Request<ItemParams>, res: Response) => {
+    const {roomId, itemId} = req.params;
+
+    if (!(await roomService.getRoomById(roomId))) {
+        return res.status(404).json({error: 'Room not found'});
+    }
+
+    if (!req.user || !(await roomService.isMember(roomId, req.user.id))) {
+        return res.status(403).json({error: 'You are not a member of this trip'});
+    }
+
+    const item = await itemService.findItemInRoom(roomId, itemId);
 
     if (!item) {
-        return res.status(404).json({ error: 'Item not found' });
+        return res.status(404).json({error: 'Item not found'});
     }
 
     res.json(item);
 };
 
-export const createItem = (req: Request<RoomParams>, res: Response) => {
+export const createItem = async (req: Request<RoomParams>, res: Response) => {
     if (!req.user) {
-        return res.status(401).json({ error: 'Unauthorized' });
+        return res.status(401).json({error: 'Unauthorized'});
     }
 
-    const { roomId } = req.params;
+    const {roomId} = req.params;
 
-    if (!roomService.getRoomById(roomId)) {
-        return res.status(404).json({ error: 'Room not found' });
+    if (!(await roomService.getRoomById(roomId))) {
+        return res.status(404).json({error: 'Room not found'});
     }
 
-    if (!roomService.isMember(roomId, req.user.id)) {
-        return res.status(403).json({ error: 'You are not a member of this trip' });
+    if (!(await roomService.isMember(roomId, req.user.id))) {
+        return res.status(403).json({error: 'You are not a member of this trip'});
     }
 
     const result = itemCreateSchema.safeParse(req.body);
@@ -72,36 +93,40 @@ export const createItem = (req: Request<RoomParams>, res: Response) => {
     }
 
     // Якщо учасників не вказано — витрата ділиться на всіх у подорожі
-    const splitBetween = result.data.splitBetween
-        ?? roomService.getMemberOfRoom(roomId).map((member) => member.id);
-
-    const strangers = splitBetween.filter(
-        (userId) => !roomService.isMember(roomId, userId),
-    );
-
-    if (strangers.length > 0) {
-        return res.status(422).json({
-            error: 'Validation failed',
-            details: { splitBetween: ['Можна ділити лише між учасниками подорожі'] },
-        });
-    }
-
+    const splitBetween = result.data.splitBetween ?? await roomService.getMemberIds(roomId);
     const paidById = result.data.paidById ?? req.user.id;
 
-    if (!roomService.isMember(roomId, paidById)) {
-        return res.status(422).json({
-            error: 'Validation failed',
-            details: { paidById: ['Платити може лише учасник подорожі'] },
-        });
+    const participantErrors = await validateParticipants(roomId, paidById, splitBetween);
+
+    if (participantErrors) {
+        return res.status(422).json({error: 'Validation failed', details: participantErrors});
     }
 
-    const newItem = itemService.createItem(roomId, req.user.id, {...result.data, paidById, splitBetween});
+    const newItem = await itemService.createItem(roomId, req.user.id, {...result.data, paidById, splitBetween});
 
     res.status(201).json(newItem);
 };
 
-export const updateItem = (req: Request<ItemParams>, res: Response) => {
-    const { roomId, itemId } = req.params;
+export const updateItem = async (req: Request<ItemParams>, res: Response) => {
+    if (!req.user) {
+        return res.status(401).json({error: 'Unauthorized'});
+    }
+
+    const {roomId, itemId} = req.params;
+
+    if (!(await roomService.getRoomById(roomId))) {
+        return res.status(404).json({error: 'Room not found'});
+    }
+
+    if (!(await roomService.isMember(roomId, req.user.id))) {
+        return res.status(403).json({error: 'You are not a member of this trip'});
+    }
+
+    const item = await itemService.findItemInRoom(roomId, itemId);
+
+    if (!item) {
+        return res.status(404).json({error: 'Item not found'});
+    }
 
     const result = itemUpdateSchema.safeParse(req.body);
 
@@ -112,41 +137,39 @@ export const updateItem = (req: Request<ItemParams>, res: Response) => {
         });
     }
 
-    if (!roomService.getRoomById(roomId)) {
-        return res.status(404).json({ error: 'Room not found' });
+    const participantErrors = await validateParticipants(
+        roomId,
+        result.data.paidById,
+        result.data.splitBetween,
+    );
+
+    if (participantErrors) {
+        return res.status(422).json({error: 'Validation failed', details: participantErrors});
     }
 
-    const item = itemService.findItemInRoom(roomId, itemId);
-
-    if (!item) {
-        return res.status(404).json({ error: 'Item not found' });
-    }
-
-    const { name, quantity, price } = result.data;
-
-    const updatedItem = itemService.updateItem(item, name, quantity, price);
+    const updatedItem = await itemService.updateItem(item, {...result.data});
 
     res.json(updatedItem);
 };
 
-export const deleteItem = (req: Request<ItemParams>, res: Response) => {
-    const { roomId, itemId } = req.params;
+export const deleteItem = async (req: Request<ItemParams>, res: Response) => {
+    const {roomId, itemId} = req.params;
 
-    if (!roomService.getRoomById(roomId)) {
-        return res.status(404).json({ error: 'Room not found' });
+    if (!(await roomService.getRoomById(roomId))) {
+        return res.status(404).json({error: 'Room not found'});
     }
 
-    if (!req.user || !roomService.isMember(roomId, req.user.id)) {
-        return res.status(403).json({ error: 'You are not a member of this trip' });
+    if (!req.user || !(await roomService.isMember(roomId, req.user.id))) {
+        return res.status(403).json({error: 'You are not a member of this trip'});
     }
 
-    const item = itemService.findItemInRoom(roomId, itemId);
+    const item = await itemService.findItemInRoom(roomId, itemId);
 
     if (!item) {
-        return res.status(404).json({ error: 'Item not found' });
+        return res.status(404).json({error: 'Item not found'});
     }
 
-    itemService.deleteItem(itemId);
+    await itemService.deleteItem(itemId);
 
     res.sendStatus(204);
 };

@@ -3,7 +3,9 @@ export type RoomStatus = 'active' | 'upcoming' | 'past';
 export type RoomMemberResponse = {
     id: string;
     name: string;
-    role: RoomMember['role']
+    email: string;
+    role: RoomMember['role'];
+    joinedAt: Date;
 }
 
 export type RoomResponse = Room & {

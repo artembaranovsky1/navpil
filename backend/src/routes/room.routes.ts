@@ -10,5 +10,6 @@ router.post('/', verifyToken, roomController.createRoom);
 router.post('/join', verifyToken, roomController.joinRoom);
 router.patch('/:roomId', verifyToken, roomController.updateRoom);
 router.delete('/:roomId', verifyToken, roomController.deleteRoom);
+router.delete('/:roomId/members/:userId', verifyToken, roomController.removeMember);
 
 export default router;

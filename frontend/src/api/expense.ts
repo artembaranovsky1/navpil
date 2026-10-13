@@ -46,12 +46,21 @@ export type CreateExpenseData = {
     splitBetween?: string[];
 };
 
+export type UpdateExpenseData = {
+    name?: string;
+    description?: string;
+    amount?: number;
+    category?: ExpenseCategory;
+    date?: string;
+    paidById?: string;
+    splitBetween?: string[];
+};
 
 export const getExpenses = async (tripId: string): Promise<ExpenseResponse[]> => {
     const token = localStorage.getItem('token');
 
     const response = await fetch(`${API_URL}/rooms/${tripId}/items`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {Authorization: `Bearer ${token}`},
     })
 
     const data = await response.json();
@@ -84,12 +93,34 @@ export const createExpense = async (tripId: string, expenseData: CreateExpenseDa
     return data;
 }
 
+export const updateExpense = async (
+    tripId: string,
+    expenseId: string,
+    changes: UpdateExpenseData,
+): Promise<ExpenseResponse> => {
+    const token = localStorage.getItem('token');
+
+    const response = await fetch(`${API_URL}/rooms/${tripId}/items/${expenseId}`, {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json', Authorization: `Bearer ${token}`},
+        body: JSON.stringify(changes),
+    })
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new ApiError(response.status, data.error ?? 'update expenses failed', data.details);
+    }
+
+    return data;
+}
+
 export const deleteExpense = async (tripId: string, expenseId: string): Promise<void> => {
     const token = localStorage.getItem('token');
 
     const response = await fetch(`${API_URL}/rooms/${tripId}/items/${expenseId}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {Authorization: `Bearer ${token}`},
     })
 
     if (!response.ok) {
@@ -97,3 +128,5 @@ export const deleteExpense = async (tripId: string, expenseId: string): Promise<
         throw new ApiError(response.status, data.error ?? 'delete expense failed', data.details);
     }
 }
+
+

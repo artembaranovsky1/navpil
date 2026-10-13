@@ -9,7 +9,7 @@ import {JoinTripPage} from "./pages/JoinTripPage.tsx";
 import {NewTripPage} from "./pages/NewTripPage/NewTripPage.tsx";
 import {TripExpensesPage} from "./pages/TripExpensesPage/TripExpensesPage.tsx";
 import {SettlePage} from "./pages/SettlePage/SettlePage.tsx";
-import {MembersPage} from "./pages/MembersPage.tsx";
+import {MembersPage} from "./pages/MembersPage/MembersPage.tsx";
 import {AddExpensePage} from "./pages/AddExpensePage.tsx";
 import {ExpenseDetailPage} from "./pages/ExpenseDetailPage.tsx";
 import {ProtectedRoutes} from "./utils/ProtectedRoutes.tsx";

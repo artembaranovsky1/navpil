@@ -15,7 +15,7 @@ export const register = async (req: Request, res: Response) => {
 
     const {name, email, password} = result.data
 
-    if (userService.findByEmail(email)) {
+    if (await userService.findByEmail(email)) {
         return res.status(409).json({error: 'Email is already registered'})
     }
 
@@ -36,7 +36,7 @@ export const login = async (req: Request, res: Response) => {
 
     const {email, password} = result.data
 
-    const user = userService.findByEmail(email)
+    const user = await userService.findByEmail(email)
 
     if (!user) {
         return res.status(401).json({error: 'Invalid email or password'})

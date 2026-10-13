@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import * as userService from '../services/user.service.js';
 import {JWT_SECRET} from '../config.js';
 
-export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
+export const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
     const authorization = req.headers.authorization;
 
     if (!authorization) {
@@ -23,7 +23,7 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction) => 
             return res.status(401).json({error: 'Invalid token'});
         }
 
-        const user = userService.getUser(payload.userId);
+        const user = await userService.getUser(payload.userId);
 
         if (!user) {
             return res.status(401).json({error: 'User no longer exists'});

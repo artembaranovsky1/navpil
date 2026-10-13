@@ -1,66 +1,109 @@
 import {Room, RoomMember, RoomMemberResponse, RoomResponse, RoomsGroupedResponse, RoomStatus} from '../types.js';
-import {RoomCreateInput} from "../validation/room.validation.js";
-import * as userService from "./user.service.js";
-import { randomInt } from 'node:crypto';
+import {RoomCreateInput, RoomUpdateInput} from "../validation/room.validation.js";
+import {randomInt} from 'node:crypto';
+import {prisma} from "../lib/prisma.js";
 
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const CODE_LENGTH = 6;
 
-const rooms: Room[] = [];
-const roomMembers: RoomMember[] = [];
-
 const todayString = () => new Date().toISOString().slice(0, 10);
 
-export const addMember = (roomId: string, userId: string, role: RoomMember['role'],): RoomMember => {
-    const member: RoomMember = {
-        roomId,
-        userId,
-        role,
-        joinedAt: new Date(),
-    };
+// "2026-05-12" <-> Date (колонки @db.Date зберігаються без часу)
+const toDbDate = (date: string | undefined): Date | undefined => date ? new Date(date) : undefined;
+const fromDbDate = (date: Date | null): string | undefined => date ? date.toISOString().slice(0, 10) : undefined;
 
-    roomMembers.push(member);
-
-    return member;
+type RoomRow = {
+    id: string;
+    name: string;
+    description: string | null;
+    startDate: Date | null;
+    endDate: Date | null;
+    inviteCode: string;
+    createdAt: Date;
 };
 
-export const createRoom = (ownerId: string, data: RoomCreateInput): Room => {
-    const newRoom: Room = {
-        id: crypto.randomUUID(),
-        name: data.name,
-        description: data.description,
-        startDate: data.startDate,
-        endDate: data.endDate,
-        inviteCode: generateInviteCode(),
-        createdAt: new Date(),
-    };
-
-    rooms.push(newRoom);
-    addMember(newRoom.id, ownerId, 'owner');
-
-    return newRoom;
+type MemberRow = {
+    role: RoomMember['role'];
+    joinedAt: Date;
+    user: { id: string; name: string; email: string };
 };
 
-export const getMemberOfRoom = (roomId: string) => {
-    const result: RoomMemberResponse[] = [];
+const memberUserSelect = {select: {id: true, name: true, email: true}};
 
-    for (const member of roomMembers) {
-        if (member.roomId !== roomId) continue;
+const membersInclude = {
+    members: {
+        include: {user: memberUserSelect},
+        orderBy: {joinedAt: 'asc' as const},
+    },
+};
 
-        const user = userService.findById(member.userId);
-        if (!user) continue;
+const toRoom = (row: RoomRow): Room => ({
+    id: row.id,
+    name: row.name,
+    description: row.description ?? undefined,
+    startDate: fromDbDate(row.startDate),
+    endDate: fromDbDate(row.endDate),
+    inviteCode: row.inviteCode,
+    createdAt: row.createdAt,
+});
 
-        result.push({id: user.id, name: user.name, role: member.role});
-    }
+const toMemberResponse = (member: MemberRow): RoomMemberResponse => ({
+    id: member.user.id,
+    name: member.user.name,
+    email: member.user.email,
+    role: member.role,
+    joinedAt: member.joinedAt,
+});
 
-    return result;
-}
+const buildRoomResponse = (row: RoomRow & { members: MemberRow[] }, today = todayString()): RoomResponse => {
+    const room = toRoom(row);
 
-export const toRoomResponse = (room: Room): RoomResponse => {
     return {
         ...room,
-        members: getMemberOfRoom(room.id),
-        status: getRoomStatus(room, todayString())
+        members: row.members.map(toMemberResponse),
+        status: getRoomStatus(room, today),
+    };
+};
+
+export const addMember = async (roomId: string, userId: string, role: RoomMember['role']): Promise<void> => {
+    await prisma.roomMember.create({data: {roomId, userId, role}});
+};
+
+export const createRoom = async (ownerId: string, data: RoomCreateInput): Promise<Room> => {
+    const row = await prisma.room.create({
+        data: {
+            name: data.name,
+            description: data.description,
+            startDate: toDbDate(data.startDate),
+            endDate: toDbDate(data.endDate),
+            inviteCode: await generateInviteCode(),
+            members: {create: {userId: ownerId, role: 'owner'}},
+        },
+    });
+
+    return toRoom(row);
+};
+
+export const getMemberOfRoom = async (roomId: string): Promise<RoomMemberResponse[]> => {
+    const members = await prisma.roomMember.findMany({
+        where: {roomId},
+        include: {user: memberUserSelect},
+        orderBy: {joinedAt: 'asc'},
+    });
+
+    return members.map(toMemberResponse);
+}
+
+export const getMemberIds = async (roomId: string): Promise<string[]> => {
+    const members = await prisma.roomMember.findMany({where: {roomId}, select: {userId: true}});
+    return members.map((member) => member.userId);
+}
+
+export const toRoomResponse = async (room: Room): Promise<RoomResponse> => {
+    return {
+        ...room,
+        members: await getMemberOfRoom(room.id),
+        status: getRoomStatus(room, todayString()),
     }
 }
 
@@ -74,35 +117,48 @@ export const getRoomStatus = (room: Room, today: string): RoomStatus => {
     }
 
     return 'active'
-
 }
 
-export const getRoomsForUser = (userId: string): RoomsGroupedResponse => {
-    const myRoomIds = roomMembers
-        .filter((member) => member.userId === userId)
-        .map((member) => member.roomId);
+export const getRoomsForUser = async (userId: string): Promise<RoomsGroupedResponse> => {
+    const rows = await prisma.room.findMany({
+        where: {members: {some: {userId}}},
+        include: membersInclude,
+        orderBy: {createdAt: 'desc'},
+    });
 
-    const myRooms = rooms.filter((room) => myRoomIds.includes(room.id));
     const today = todayString();
-
     const grouped: RoomsGroupedResponse = {active: [], past: [], upcoming: []}
 
-    for (const room of myRooms) {
-        const status = getRoomStatus(room, today);
-        grouped[status].push((toRoomResponse(room)))
+    for (const row of rows) {
+        const room = buildRoomResponse(row, today);
+        grouped[room.status].push(room);
     }
 
-    grouped.upcoming.sort((a,b) => a.startDate!.localeCompare(b.startDate!))
-    grouped.past.sort((a,b) => b.endDate!.localeCompare(a.endDate!))
+    grouped.upcoming.sort((a, b) => a.startDate!.localeCompare(b.startDate!))
+    grouped.past.sort((a, b) => b.endDate!.localeCompare(a.endDate!))
 
     return grouped;
 };
 
-export const isMember = (roomId: string, userId: string)=> {
-    return roomMembers.some((member) => member.userId === userId && member.roomId === roomId);
+export const isMember = async (roomId: string, userId: string): Promise<boolean> => {
+    const member = await prisma.roomMember.findUnique({
+        where: {roomId_userId: {roomId, userId}},
+        select: {userId: true},
+    });
+
+    return member !== null;
 }
 
-const generateInviteCode = (): string => {
+export const getMemberRole = async (roomId: string, userId: string): Promise<RoomMember['role'] | undefined> => {
+    const member = await prisma.roomMember.findUnique({
+        where: {roomId_userId: {roomId, userId}},
+        select: {role: true},
+    });
+
+    return member?.role;
+}
+
+const generateInviteCode = async (): Promise<string> => {
     let code: string;
 
     do {
@@ -110,38 +166,56 @@ const generateInviteCode = (): string => {
         for (let i = 0; i < CODE_LENGTH; i++) {
             code += CODE_ALPHABET[randomInt(CODE_ALPHABET.length)];
         }
-    } while (rooms.some((room) => room.inviteCode === code)); // раптом такий уже є
+    } while (await prisma.room.findUnique({where: {inviteCode: code}, select: {id: true}})); // раптом такий уже є
 
     return code;
 };
 
-export const findIndex = (roomId: string) => {
-    return rooms.findIndex((room: Room) => room.id === roomId);
+export const findRoomByCode = async (code: string): Promise<Room | undefined> => {
+    const row = await prisma.room.findUnique({where: {inviteCode: code}});
+    return row ? toRoom(row) : undefined;
 }
 
-export const findRoomByCode = (code: string): Room | undefined => {
-    return rooms.find(room => room.inviteCode === code);
+export const deleteRoom = async (roomId: string): Promise<void> => {
+    await prisma.room.delete({where: {id: roomId}});
 }
 
-export const deleteRoom = (index: number) => {
-    rooms.splice(index, 1);
+export const getRoomById = async (roomId: string): Promise<Room | undefined> => {
+    const row = await prisma.room.findUnique({where: {id: roomId}});
+    return row ? toRoom(row) : undefined;
 }
 
-export const getRoomById = (roomId: string) => {
-    return rooms.find((room: Room) => room.id === roomId)
+export const updateRoom = async (foundRoom: Room, changes: RoomUpdateInput): Promise<Room> => {
+    const row = await prisma.room.update({
+        where: {id: foundRoom.id},
+        data: {
+            name: changes.name,
+            description: changes.description,
+            startDate: toDbDate(changes.startDate),
+            endDate: toDbDate(changes.endDate),
+        },
+    });
+
+    return toRoom(row);
 }
 
-export const updateRoom = (foundRoom: Room, changes: RoomCreateInput) => {
-    const editRoom: Room = {
-        ...foundRoom,
-        name: changes.name ?? foundRoom.name,
-        description: changes.description ?? foundRoom.description,
-        startDate: changes.startDate ?? foundRoom.startDate,
-        endDate: changes.startDate ?? foundRoom.endDate,
-    }
+// Чи бере учасник участь у витратах чи переказах подорожі — такого не можна видаляти
+export const hasActivity = async (roomId: string, userId: string): Promise<boolean> => {
+    const [items, payments] = await Promise.all([
+        prisma.item.count({
+            where: {
+                roomId,
+                OR: [{addedById: userId}, {paidById: userId}, {splitBetween: {has: userId}}],
+            },
+        }),
+        prisma.payment.count({
+            where: {roomId, OR: [{fromId: userId}, {toId: userId}]},
+        }),
+    ]);
 
-    const index = findIndex(foundRoom.id);
-    rooms[index] = editRoom;
+    return items > 0 || payments > 0;
+}
 
-    return editRoom;
+export const removeMember = async (roomId: string, userId: string): Promise<void> => {
+    await prisma.roomMember.delete({where: {roomId_userId: {roomId, userId}}});
 }

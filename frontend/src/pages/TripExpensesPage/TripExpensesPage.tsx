@@ -16,6 +16,7 @@ import {CategoryChart} from "./components/CategoryChart/CategoryChart.tsx";
 import {PaidByMembers} from "./components/PaidByMembers/PaidByMembers.tsx";
 import {SettleLink} from "./components/SettleLink/SettleLink.tsx";
 import {ExpenseDetail} from "./components/ExpenseDetail/ExpenseDetail.tsx";
+import {EditExpense} from "./components/EditExpense/EditExpense.tsx";
 
 export const TripExpensesPage = () => {
     const [expenses, setExpenses] = useState<ExpenseResponse[]>([])
@@ -27,6 +28,7 @@ export const TripExpensesPage = () => {
 
     const [isNewExpenseOpen, setIsNewExpenseOpen] = useState<boolean>(false)
     const [selectedExpenseId, setSelectedExpenseId] = useState<string>()
+    const [isEditingExpense, setIsEditingExpense] = useState<boolean>(false)
 
     console.log(trip)
 
@@ -116,17 +118,31 @@ export const TripExpensesPage = () => {
                 />
             )}
 
-            {selectedExpense && (
+            {selectedExpense && !isEditingExpense && (
                 <ExpenseDetail
                     tripId={tripId}
                     expense={selectedExpense}
                     members={trip.members}
                     currentUserId={currentUserId}
                     onClose={() => setSelectedExpenseId(undefined)}
+                    onEdit={() => setIsEditingExpense(true)}
                     onDeleted={(expenseId) => {
                         setExpenses((current) => current.filter((expense) => expense.id !== expenseId))
                         setSelectedExpenseId(undefined)
                     }}
+                />
+            )}
+
+            {selectedExpense && isEditingExpense && (
+                <EditExpense
+                    tripId={tripId}
+                    expense={selectedExpense}
+                    members={trip.members}
+                    onUpdated={(updated) => {
+                        setExpenses((current) => current.map((expense) => expense.id === updated.id ? updated : expense))
+                        setIsEditingExpense(false)
+                    }}
+                    onClose={() => setIsEditingExpense(false)}
                 />
             )}
         </div>

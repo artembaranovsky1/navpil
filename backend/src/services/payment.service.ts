@@ -1,22 +1,31 @@
 import {Payment} from "../types.js";
 import {PaymentCreateInput} from "../validation/payment.validation.js";
+import {prisma} from "../lib/prisma.js";
+import type {Payment as PaymentRow} from "../generated/prisma/client.js";
 
-const payments: Payment[] = [];
+const toPayment = (row: PaymentRow): Payment => ({
+    id: row.id,
+    roomId: row.roomId,
+    fromId: row.fromId,
+    toId: row.toId,
+    amount: row.amount.toNumber(),
+    createdById: row.createdById,
+    createdAt: row.createdAt,
+});
 
-export const getPaymentsByRoomId = (roomId: string): Payment[] => {
-    return payments.filter((payment) => payment.roomId === roomId);
+export const getPaymentsByRoomId = async (roomId: string): Promise<Payment[]> => {
+    const rows = await prisma.payment.findMany({
+        where: {roomId},
+        orderBy: {createdAt: 'asc'},
+    });
+
+    return rows.map(toPayment);
 };
 
-export const createPayment = (roomId: string, createdById: string, data: PaymentCreateInput): Payment => {
-    const newPayment: Payment = {
-        id: crypto.randomUUID(),
-        roomId,
-        ...data,
-        createdById,
-        createdAt: new Date(),
-    };
+export const createPayment = async (roomId: string, createdById: string, data: PaymentCreateInput): Promise<Payment> => {
+    const row = await prisma.payment.create({
+        data: {roomId, createdById, ...data},
+    });
 
-    payments.push(newPayment);
-
-    return newPayment;
+    return toPayment(row);
 };

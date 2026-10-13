@@ -2,66 +2,39 @@ import {User} from "../types.js";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import {JWT_SECRET} from "../config.js";
+import {prisma} from "../lib/prisma.js";
 
-export const users: User[] = []
-
-export const findIndex = (userId: string) => {
-    return users.findIndex((user: User) => user.id === userId);
+export const findByEmail = (email: string): Promise<User | null> => {
+    return prisma.user.findUnique({where: {email}});
 }
 
-export const findByEmail = (email: string) => {
-    return users.find((user: User) => user.email === email);
+export const findById = (userId: string): Promise<User | null> => {
+    return prisma.user.findUnique({where: {id: userId}});
 }
 
-export const findById = (userId: string) => {
-    return users.find((user: User) => user.id === userId);
+export const getUsers = (): Promise<User[]> => {
+    return prisma.user.findMany({orderBy: {createdAt: 'asc'}});
 }
 
+export const getUser = findById;
 
-export const getUsers = () => {
-    return users
-}
-
-export const getUser = (userId: string) => {
-    return users.find((user: User) => user.id === userId)
-}
-
-export const createUser = async (name: string, email: string, password: string) => {
+export const createUser = async (name: string, email: string, password: string): Promise<User> => {
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const newUser = {
-        id: crypto.randomUUID(),
-        email,
-        passwordHash,
-        name,
-        createdAt: new Date(),
-    }
-
-    users.push(newUser);
-
-    return newUser;
+    return prisma.user.create({
+        data: {name, email, passwordHash},
+    });
 }
 
-export const updateUser = (user: User, newName: string) => {
-    const editUser = {
-        id: user.id,
-        email: user.email,
-        passwordHash: user.passwordHash,
-        name: newName,
-        createdAt: user.createdAt,
-    }
-
-    const index = findIndex(user.id)
-
-    users[index] = editUser
-
-    return editUser;
+export const updateUser = (user: User, newName: string): Promise<User> => {
+    return prisma.user.update({
+        where: {id: user.id},
+        data: {name: newName},
+    });
 }
 
-export const deleteUser = (userId: string) => {
-    const index = findIndex(userId)
-
-    users.splice(index, 1);
+export const deleteUser = async (userId: string): Promise<void> => {
+    await prisma.user.delete({where: {id: userId}});
 }
 
 export const verifyPassword = async (user: User, password: string): Promise<boolean> => {
@@ -87,4 +60,3 @@ export const toUserResponse = (user: User) => {
         createdAt: user.createdAt,
     }
 }
-
