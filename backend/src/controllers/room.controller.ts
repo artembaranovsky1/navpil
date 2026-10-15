@@ -1,5 +1,6 @@
 import {Request, Response} from 'express';
 import * as roomService from "../services/room.service.js";
+import * as summaryService from "../services/summary.service.js";
 import {joinRoomSchema, roomCreateSchema, roomUpdateSchema} from "../validation/room.validation.js";
 import * as z from "zod";
 
@@ -18,6 +19,14 @@ export const getRooms = async (req: Request, res: Response) => {
     }
 
     res.json(await roomService.getRoomsForUser(req.user.id));
+};
+
+export const getRoomsSummary = async (req: Request, res: Response) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    res.json(await summaryService.getSummaryForUser(req.user.id));
 };
 
 export const getRoom = async (req: Request<RoomParams>, res: Response) => {

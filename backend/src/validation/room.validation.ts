@@ -56,6 +56,22 @@ export const roomResponseSchema = z
     })
     .openapi('Room');
 
+const roomSummarySchema = z
+    .object({
+        total: z.number().openapi({example: 20470}),
+        myBalance: z.number().openapi({example: 2800}),
+    })
+    .openapi('RoomSummary');
+
+export const roomsSummaryResponseSchema = z
+    .object({
+        myBalance: z.number().openapi({example: 2800, description: 'Скільки ще мають повернути користувачу (+) чи має віддати він (−)'}),
+        totalSpent: z.number().openapi({example: 20470}),
+        tripsThisYear: z.number().int().openapi({example: 3}),
+        trips: z.record(z.uuid(), roomSummarySchema),
+    })
+    .openapi('RoomsSummary');
+
 export const roomParamsSchema = z.object({
     roomId: z.uuid().openapi({
         param: {description: 'Room ID'},

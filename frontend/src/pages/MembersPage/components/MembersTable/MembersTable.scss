@@ -1,0 +1,210 @@
+@use '../../../../styles/color' as *;
+
+.members-table-card {
+  padding: 8px 24px 12px;
+  background: $surface;
+  border: 1px solid $divider;
+  border-radius: 20px;
+}
+
+.members-table-card__title {
+  margin: 0;
+  padding: 16px 0 6px;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.members-table-card__error {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: $red;
+}
+
+.members-table-card__wrap {
+  overflow-x: auto;
+}
+
+.members-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.members-table__th {
+  padding: 10px 0;
+  border-bottom: 1px solid $divider;
+  font-size: 12px;
+  font-weight: 400;
+  color: #6B6B66;
+  text-align: left;
+
+  &--right {
+    text-align: right;
+  }
+
+  &--actions {
+    width: 48px;
+  }
+}
+
+.members-table__hidden {
+  position: absolute;
+  left: -9999px;
+}
+
+.members-table__td {
+  padding: 12px 0;
+  border-bottom: 1px solid #F0F0EC;
+
+  .members-table__row:last-child & {
+    border-bottom: none;
+  }
+
+  &--right {
+    text-align: right;
+  }
+
+  &--role {
+    color: #55554F;
+  }
+
+  &--balance {
+    text-align: right;
+    font-weight: 600;
+  }
+
+  &--positive {
+    color: $green;
+  }
+}
+
+.members-table__member {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.members-table__avatar {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 19px;
+  background: #E7E7E3;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.members-table__online-dot {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 11px;
+  height: 11px;
+  border-radius: 6px;
+  background: $green;
+  border: 2px solid #FFFFFF;
+}
+
+.members-table__name {
+  display: block;
+  font-weight: 500;
+}
+
+.members-table__you {
+  font-weight: 400;
+  color: #6B6B66;
+}
+
+.members-table__sub {
+  display: block;
+  font-size: 12px;
+  color: #6B6B66;
+
+  &--online {
+    color: $green;
+  }
+}
+
+.members-table__role-badge {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 13px;
+  border: 1px solid $ink;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.members-table__more {
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  border: none;
+  background: transparent;
+  color: #6B6B66;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  &:hover {
+    background: $ghost-hover;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.members-table__actions {
+  position: relative;
+  display: inline-block;
+}
+
+.members-table__menu {
+  // відкривається ліворуч від кнопки, щоб не обрізалось overflow таблиці
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 4px);
+  transform: translateY(-50%);
+  z-index: 10;
+  padding: 6px;
+  background: $surface;
+  border: 1px solid $divider;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+.members-table__menu-item {
+  height: 40px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    background: $ghost-hover;
+  }
+
+  &--danger {
+    color: $red;
+
+    &:hover {
+      background: $red-tint;
+    }
+  }
+}

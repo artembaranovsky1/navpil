@@ -83,7 +83,6 @@ export const Settlement = ({trip, expenses, payments, currentUserId, onPaymentCr
                     <section aria-label="Баланси" className="settlement__panel">
                         <div className="settlement__panel-header">
                             <h2 className="settlement__panel-title">Баланси</h2>
-                            <span className="settlement__label">заплатив мінус частка</span>
                         </div>
                         <div className="settlement__axis">
                             <span>винні</span>
@@ -189,20 +188,6 @@ export const Settlement = ({trip, expenses, payments, currentUserId, onPaymentCr
                         )}
                         {actionError && <p className="settlement__error" role="alert">{actionError}</p>}
                     </section>
-
-                    {showsSavings && (
-                        <section className="settlement__hint">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                 strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <circle cx="12" cy="12" r="9"/>
-                                <path d="M12 11v5M12 8v.5"/>
-                            </svg>
-                            <p>
-                                navpil зводить усі борги до мінімуму переказів. Без нього кожен розраховувався б з
-                                кожним — {naiveTransfersCount} переказів замість {transfers.length}.
-                            </p>
-                        </section>
-                    )}
                 </div>
             </div>
         </>

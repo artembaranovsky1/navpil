@@ -5,6 +5,7 @@ import {CATEGORY_LABELS, deleteExpense, type ExpenseResponse} from "../../../../
 import type {TripMember} from "../../../../api/trips.ts";
 import {getExpenseShares, getMemberName} from "../../../../utils/settle.ts";
 import {formatLongDate, formatMoney, pluralize} from "../../../../utils/format.ts";
+import {getAvatarColor} from "../../../../utils/colors.ts";
 
 type ExpenseDetailProps = {
     tripId: string;
@@ -45,12 +46,6 @@ export const ExpenseDetail = ({tripId, expense, members, currentUserId, onClose,
 
     const name = (userId: string) => getMemberName(members, userId);
     const dateLabel = `${formatLongDate(expense.date ?? expense.createdAt)}, ${formatTime(expense.createdAt)}`;
-
-    const avatarClass = (userId: string): string => {
-        if (userId === payerId) return 'expense-detail__avatar expense-detail__avatar--payer';
-        if (userId === currentUserId) return 'expense-detail__avatar expense-detail__avatar--me';
-        return 'expense-detail__avatar';
-    };
 
     const segmentClass = (userId: string): string => {
         if (userId === payerId) return 'expense-detail__segment expense-detail__segment--payer';
@@ -131,7 +126,7 @@ export const ExpenseDetail = ({tripId, expense, members, currentUserId, onClose,
                 <section className="expense-detail__members">
                     {shares.every((share) => share.id !== payerId) && (
                         <div className="expense-detail__member">
-                            <span className={avatarClass(payerId)}>{name(payerId).charAt(0).toUpperCase()}</span>
+                            <span className="expense-detail__avatar" style={{background: getAvatarColor(payerId)}}>{name(payerId).charAt(0).toUpperCase()}</span>
                             <div className="expense-detail__member-info">
                                 <div className="expense-detail__member-name">{name(payerId)}</div>
                                 <div className="expense-detail__member-note">оплата, без частки</div>
@@ -147,7 +142,7 @@ export const ExpenseDetail = ({tripId, expense, members, currentUserId, onClose,
 
                         return (
                             <div key={share.id} className="expense-detail__member">
-                                <span className={avatarClass(share.id)}>{name(share.id).charAt(0).toUpperCase()}</span>
+                                <span className="expense-detail__avatar" style={{background: getAvatarColor(share.id)}}>{name(share.id).charAt(0).toUpperCase()}</span>
                                 <div className="expense-detail__member-info">
                                     <div className="expense-detail__member-name">{name(share.id)}</div>
                                     <div className="expense-detail__member-note">

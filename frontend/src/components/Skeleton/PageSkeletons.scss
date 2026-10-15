@@ -1,0 +1,130 @@
+@use '../../styles/color' as *;
+
+.page-skeleton {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 40px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  @media (max-width: 600px) {
+    padding: 24px 16px;
+  }
+}
+
+.page-skeleton__header {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.page-skeleton__header-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-skeleton__tabs {
+  height: 44px;
+  border-bottom: 1px solid $divider;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.page-skeleton__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.page-skeleton__stack {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  &--grow {
+    flex: 1;
+  }
+}
+
+.page-skeleton__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.page-skeleton__card {
+  padding: 20px 24px;
+  background: $surface;
+  border: 1px solid $divider;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &--stat {
+    padding: 20px;
+    gap: 12px;
+  }
+}
+
+.page-skeleton__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.page-skeleton__columns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.page-skeleton__main {
+  flex: 999 1 520px;
+  min-width: 0;
+}
+
+.page-skeleton__aside {
+  flex: 1 1 300px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.page-skeleton__donut {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.page-skeleton__section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.page-skeleton__active {
+  padding: 28px;
+  border-radius: 24px;
+  background: $ink;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.page-skeleton__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}

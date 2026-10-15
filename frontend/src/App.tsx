@@ -5,7 +5,7 @@ import {UiKitPage} from "./pages/UiKitPage.tsx";
 import {LoginPage} from "./pages/LoginPage/LoginPage.tsx";
 import {RegisterPage} from "./pages/RegisterPage/RegisterPage.tsx";
 import {TripsPage} from "./pages/TripsPage/TripsPage.tsx";
-import {JoinTripPage} from "./pages/JoinTripPage.tsx";
+import {JoinTripPage} from "./pages/JoinTripPage/JoinTripPage.tsx";
 import {NewTripPage} from "./pages/NewTripPage/NewTripPage.tsx";
 import {TripExpensesPage} from "./pages/TripExpensesPage/TripExpensesPage.tsx";
 import {SettlePage} from "./pages/SettlePage/SettlePage.tsx";

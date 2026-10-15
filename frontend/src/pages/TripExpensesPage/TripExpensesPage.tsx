@@ -17,6 +17,7 @@ import {PaidByMembers} from "./components/PaidByMembers/PaidByMembers.tsx";
 import {SettleLink} from "./components/SettleLink/SettleLink.tsx";
 import {ExpenseDetail} from "./components/ExpenseDetail/ExpenseDetail.tsx";
 import {EditExpense} from "./components/EditExpense/EditExpense.tsx";
+import {TripPageSkeleton} from "../../components/Skeleton/PageSkeletons.tsx";
 
 export const TripExpensesPage = () => {
     const [expenses, setExpenses] = useState<ExpenseResponse[]>([])
@@ -64,7 +65,7 @@ export const TripExpensesPage = () => {
     }, [tripId])
 
     if (isLoading) {
-        return <p>Завантаження…</p>;
+        return <TripPageSkeleton/>;
     }
 
     if (error || !trip || !tripId) {
@@ -75,7 +76,7 @@ export const TripExpensesPage = () => {
     const {balances, transfers} = calculateSettlement(trip.members, expenses, payments);
 
     return (
-        <div className="trip-expenses-page">
+        <div className="trip-expenses-page page-appear">
             <TripHeader
                 trip={trip}
                 onAddExpense={() => setIsNewExpenseOpen(true)}

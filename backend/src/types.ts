@@ -75,3 +75,17 @@ export type Payment = {
     createdById: string;
     createdAt: Date;
 };
+
+export type RoomSummary = {
+    // скільки витратили всі учасники разом
+    total: number;
+    // скільки ще мають повернути користувачу (+) чи має віддати він (−)
+    myBalance: number;
+};
+
+export type RoomsSummaryResponse = {
+    myBalance: number;
+    totalSpent: number;
+    tripsThisYear: number;
+    trips: Record<string, RoomSummary>;
+};

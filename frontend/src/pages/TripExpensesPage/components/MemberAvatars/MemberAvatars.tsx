@@ -1,6 +1,7 @@
 import './MemberAvatars.scss'
 import {Link} from "react-router";
 import type {TripMember} from "../../../../api/trips.ts";
+import {getAvatarColor} from "../../../../utils/colors.ts";
 
 type MemberAvatarsProps = {
     tripId: string;
@@ -25,7 +26,8 @@ export const MemberAvatars = ({tripId, members, currentUserId}: MemberAvatarsPro
             {visible.map((member) => (
                 <span
                     key={member.id}
-                    className={member.id === currentUserId ? 'member-avatars__item member-avatars__item--me' : 'member-avatars__item'}
+                    className='member-avatars__item member-avatars__item--colored'
+                    style={{background: getAvatarColor(member.id)}}
                     aria-hidden="true"
                 >
                     {member.name.trim().charAt(0).toUpperCase()}

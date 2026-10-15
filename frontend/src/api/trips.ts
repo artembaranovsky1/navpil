@@ -110,3 +110,46 @@ export const joinTrip = async (code: string): Promise<TripResponse> => {
 
     return data;
 }
+
+export const removeMember = async (tripId: string, userId: string): Promise<void> => {
+    const token = localStorage.getItem('token');
+
+    const response = await fetch(`${API_URL}/rooms/${tripId}/members/${userId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new ApiError(response.status, data.error ?? 'remove member failed', data.details);
+    }
+}
+
+
+export type TripSummary = {
+    // скільки витратили всі разом
+    total: number;
+    // скільки ще мають повернути тобі (+) чи маєш віддати ти (−)
+    myBalance: number;
+}
+
+export type TripsSummaryResponse = {
+    myBalance: number;
+    totalSpent: number;
+    tripsThisYear: number;
+    trips: Record<string, TripSummary>;
+}
+
+export const getTripsSummary = async (): Promise<TripsSummaryResponse> => {
+    const token = localStorage.getItem('token');
+
+    const response = await fetch(`${API_URL}/rooms/summary`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) {
+        throw new ApiError(response.status, 'get trips summary failed', null);
+    }
+
+    return response.json();
+}

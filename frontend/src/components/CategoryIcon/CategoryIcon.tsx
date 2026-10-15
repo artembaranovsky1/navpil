@@ -1,5 +1,7 @@
 import "./CategoryIcon.scss";
+import type {CSSProperties} from "react";
 import type {ExpenseCategory} from "../../api/expense.ts";
+import {CATEGORY_COLORS} from "../../utils/colors.ts";
 
 type CategoryIconProps = {
     category: ExpenseCategory;
@@ -18,7 +20,10 @@ const CATEGORY_ICONS: Record<ExpenseCategory, string> = {
 const ICON_SIZES = {md: 16, lg: 24};
 
 export const CategoryIcon = ({category, size = 'md'}: CategoryIconProps) => (
-    <span className={`category-icon category-icon--${size} category-icon--${category}`}>
+    <span
+        className={`category-icon category-icon--${size}`}
+        style={{'--category-color': CATEGORY_COLORS[category] ?? CATEGORY_COLORS.other} as CSSProperties}
+    >
         <svg width={ICON_SIZES[size]} height={ICON_SIZES[size]} viewBox="0 0 24 24" fill="none"
              stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
              strokeLinejoin="round" aria-hidden="true">

@@ -1,0 +1,145 @@
+@use '../../styles/color' as *;
+
+.join-trip {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  @media (max-width: 600px) {
+    padding: 20px 16px 32px;
+  }
+}
+
+.join-trip__back {
+  align-self: flex-start;
+  height: 36px;
+  padding: 0 12px 0 8px;
+  border-radius: 18px;
+  color: #6B6B66;
+  font-size: 14px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: $ghost-hover;
+    color: $ink;
+  }
+}
+
+.join-trip__card {
+  padding: 32px;
+  background: $surface;
+  border: 1px solid $divider;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+  @media (max-width: 600px) {
+    padding: 24px 20px;
+  }
+}
+
+.join-trip__icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: #EDEDEA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.join-trip__title {
+  margin: 18px 0 0;
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: -0.8px;
+}
+
+.join-trip__subtitle {
+  max-width: 340px;
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #6B6B66;
+}
+
+.join-trip__label {
+  margin-top: 28px;
+  align-self: stretch;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.join-trip__code {
+  margin-top: 6px;
+  height: 64px;
+  font-family: inherit;
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: 8px;
+  text-align: center;
+  text-transform: uppercase;
+
+  &::placeholder {
+    color: #D6D6D0;
+  }
+}
+
+.join-trip__hint,
+.join-trip__error {
+  align-self: stretch;
+  margin: 8px 0 0;
+  font-size: 13px;
+  text-align: left;
+}
+
+.join-trip__hint {
+  color: #A3A39D;
+}
+
+.join-trip__error {
+  color: $red;
+}
+
+.join-trip__actions {
+  margin-top: 24px;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.join-trip__cancel {
+  font-size: 14px;
+  color: #6B6B66;
+  text-decoration: none;
+
+  &:hover {
+    color: $ink;
+    text-decoration: underline;
+  }
+}
+
+.join-trip__alt {
+  margin: 0;
+  font-size: 14px;
+  color: #6B6B66;
+  text-align: center;
+
+  a {
+    color: $ink;
+    font-weight: 500;
+  }
+}

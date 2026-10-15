@@ -1,0 +1,152 @@
+@use '../../../styles/color' as *;
+
+.active-block {
+  padding: 28px;
+  border-radius: 24px;
+  background: $ink;
+  color: #FFFFFF;
+  text-decoration: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  transition: background 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    background: $ink-hover;
+  }
+
+  &:hover .active-block__open svg {
+    transform: translateX(3px);
+  }
+
+  @media (max-width: 600px) {
+    padding: 22px;
+  }
+}
+
+.active-block__left {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.active-block__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.active-block__name {
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.6px;
+}
+
+.active-block__status {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 13px;
+  background: $green;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.active-block__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: #FFFFFF;
+  animation: active-block-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes active-block-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.active-block__meta {
+  font-size: 14px;
+  color: #B5B5AF;
+}
+
+.active-block__expenses {
+  margin-top: 6px;
+  display: flex;
+  gap: 32px;
+}
+
+.active-block__expenses-label {
+  font-size: 12px;
+  color: #B5B5AF;
+}
+
+.active-block__expenses-value {
+  margin-top: 2px;
+  font-size: 30px;
+  font-weight: 300;
+  letter-spacing: -1px;
+
+  &--positive {
+    color: #4FC79A;
+  }
+}
+
+.active-block__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 18px;
+
+  @media (max-width: 600px) {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.active-block__avatars {
+  display: flex;
+}
+
+.active-block__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  border: 2px solid $ink;
+  background: #2E2E2C;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  & + & {
+    margin-left: -10px;
+  }
+}
+
+.active-block__open {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 20px;
+  background: #FFFFFF;
+  color: $ink;
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  svg {
+    transition: transform 0.2s ease;
+  }
+}

@@ -4,6 +4,7 @@ import {
     roomCreateSchema,
     roomParamsSchema,
     roomResponseSchema,
+    roomsSummaryResponseSchema,
     roomUpdateSchema,
 } from "../validation/room.validation.js";
 import {jsonContent, notFoundResponse, validationFailedResponse} from "./common.openapi.js";
@@ -20,6 +21,17 @@ roomsRegistry.registerPath({
     tags: [TAG],
     responses: {
         200: {description: 'List of rooms', ...jsonContent(z.array(roomResponseSchema))},
+    },
+});
+
+roomsRegistry.registerPath({
+    method: 'get',
+    path: '/rooms/summary',
+    operationId: 'getRoomsSummary',
+    summary: 'Totals and balance of the current user across all their rooms',
+    tags: [TAG],
+    responses: {
+        200: {description: 'Summary', ...jsonContent(roomsSummaryResponseSchema)},
     },
 });
 

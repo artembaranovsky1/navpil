@@ -9,6 +9,7 @@ import {NewExpense} from "../../components/NewExpense/NewExpense.tsx";
 import {TripHeader} from "../../components/TripHeader/TripHeader.tsx";
 import {Settlement} from "../../components/Settlement/Settlement.tsx";
 import {ShareSummaryButton} from "../../components/ShareSummaryButton/ShareSummaryButton.tsx";
+import {TripPageSkeleton} from "../../components/Skeleton/PageSkeletons.tsx";
 
 export const SettlePage = () => {
     const [trip, setTrip] = useState<TripResponse | null>(null);
@@ -48,7 +49,7 @@ export const SettlePage = () => {
     }, [tripId]);
 
     if (isLoading) {
-        return <p>Завантаження…</p>;
+        return <TripPageSkeleton/>;
     }
 
     if (error || !trip || !tripId) {
@@ -56,7 +57,7 @@ export const SettlePage = () => {
     }
 
     return (
-        <div className="settle-page">
+        <div className="settle-page page-appear">
             <TripHeader
                 trip={trip}
                 onAddExpense={() => setIsNewExpenseOpen(true)}

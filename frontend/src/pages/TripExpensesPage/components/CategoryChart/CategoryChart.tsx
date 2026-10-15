@@ -1,12 +1,11 @@
 import './CategoryChart.scss'
 import {CATEGORY_LABELS, type ExpenseCategory, type ExpenseResponse} from "../../../../api/expense.ts";
 import {formatMoney} from "../../../../utils/format.ts";
+import {CATEGORY_COLORS, CATEGORY_ORDER} from "../../../../utils/colors.ts";
 
 type CategoryChartProps = {
     expenses: ExpenseResponse[];
 }
-
-const COLORS = ['#111111', '#0F8A5F', '#C9C9C3', '#8E8E88', '#7FC3A8', '#E2E2DD'];
 
 const RADIUS = 36;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
@@ -20,19 +19,24 @@ export const CategoryChart = ({expenses}: CategoryChartProps) => {
     });
 
     const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-    const sorted = [...totals.entries()]
-        .filter(([, amount]) => amount > 0)
-        .sort((a, b) => b[1] - a[1]);
 
-    const categories = sorted.map(([category, amount], index) => ({
+    // у кільці категорії йдуть у фіксованому порядку — так сусідні кольори завжди добре розрізняються
+    const segments = CATEGORY_ORDER
+        .filter((category) => (totals.get(category) ?? 0) > 0)
+        .map((category) => ({category, amount: totals.get(category)!}));
+
+    const categories = segments.map(({category, amount}, index) => ({
         category,
         amount,
-        color: COLORS[index % COLORS.length],
+        color: CATEGORY_COLORS[category],
         percent: Math.round((amount / total) * 100),
         length: (amount / total) * CIRCUMFERENCE,
         // сегмент починається там, де закінчились усі попередні
-        offset: sorted.slice(0, index).reduce((sum, [, prev]) => sum + (prev / total) * CIRCUMFERENCE, 0),
+        offset: segments.slice(0, index).reduce((sum, prev) => sum + (prev.amount / total) * CIRCUMFERENCE, 0),
     }));
+
+    // а в легенді — від найбільшої суми
+    const legend = [...categories].sort((a, b) => b.amount - a.amount);
 
     const hasGap = categories.length > 1;
 
@@ -72,11 +76,11 @@ export const CategoryChart = ({expenses}: CategoryChartProps) => {
                     </svg>
 
                     <ul className="category-chart__legend">
-                        {categories.map((c) => (
+                        {legend.map((c) => (
                             <li key={c.category} className="category-chart__item">
                                 <span className="category-chart__dot" style={{background: c.color}}/>
                                 <span className="category-chart__name">{CATEGORY_LABELS[c.category]}</span>
-                                <span className="category-chart__amount">{formatMoney(c.amount)}</span>
+                                <span className="category-chart__amount">{formatMoney(c.amount)} · {c.percent}%</span>
                             </li>
                         ))}
                     </ul>

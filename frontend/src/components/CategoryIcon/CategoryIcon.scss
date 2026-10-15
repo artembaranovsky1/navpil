@@ -5,8 +5,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #EDEDEA;
-  color: $ink;
+  // світлий відтінок кольору категорії як фон, а іконка трохи темніша — щоб жовта теж читалась
+  background: color-mix(in srgb, var(--category-color, #{$ink}) 16%, #FFFFFF);
+  color: color-mix(in srgb, var(--category-color, #{$ink}) 85%, #000000);
 
   &--md {
     width: 32px;
@@ -18,17 +19,5 @@
     width: 52px;
     height: 52px;
     border-radius: 16px;
-  }
-
-  &--food,
-  &--shopping {
-    background: #E8F3EE;
-    color: $green;
-  }
-
-  &--transport,
-  &--other {
-    background: #F1F1EE;
-    color: #55554F;
   }
 }

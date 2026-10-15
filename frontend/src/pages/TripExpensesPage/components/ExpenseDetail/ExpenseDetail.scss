@@ -184,19 +184,9 @@
   justify-content: center;
   border-radius: 18px;
   background: $ghost-hover;
-  color: $ink;
+  color: $surface;
   font-size: 14px;
   font-weight: 500;
-
-  &--payer {
-    background: $green;
-    color: $surface;
-  }
-
-  &--me {
-    background: $ink;
-    color: $surface;
-  }
 }
 
 .expense-detail__member-info {
