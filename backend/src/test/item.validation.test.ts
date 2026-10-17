@@ -101,6 +101,7 @@ describe('itemCreateSchema', () => {
             expect(result.success).toBe(true);
         })
 
+
         it('не підставляє дату й категорію', () => {
             const result = itemUpdateSchema.safeParse({
                 amount: 100
