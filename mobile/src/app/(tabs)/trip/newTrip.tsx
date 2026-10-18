@@ -21,36 +21,6 @@ export default function NewTripScreen() {
     const [isLoading, setIsLoading] = useState(false);
     const [focused, setFocused] = useState<'name' | 'description' | 'startDate' | 'endDate' | null>(null);
 
-    // const handleSubmit = async () => {
-    //     setError('');
-    //     setIsLoading(true);
-    //
-    //
-    //     try {
-    //         await createTrip({
-    //             name: name.trim(),
-    //             description: description.trim() || undefined,
-    //             startDate: startDate || undefined,
-    //             endDate: endDate || undefined,
-    //         })
-    //
-    //         router.replace(`/trips`);
-    //         setIsLoading(false);
-    //     } catch (err) {
-    //         if (err instanceof ApiError && err.status === 422) {
-    //             setError('Помилка 422');
-    //         } else if (err instanceof ApiError && err.status === 401) {
-    //             await signOut()
-    //         } else if (err instanceof ApiError) {
-    //             setError('Не вдалося створити подорож, спробуйте ще раз')
-    //         } else {
-    //             setError('Немає з’єднання з сервером')
-    //         }
-    //     } finally {
-    //         setIsLoading(false);
-    //     }
-    // }
-
     const queryClient = useQueryClient();
 
     const {mutate, isPending} = useMutation({
@@ -74,7 +44,7 @@ export default function NewTripScreen() {
 
     const handleSubmit = () => {
         if (!name.trim()) {
-            setName('Вкажіть назву подорожі');
+            setError('Вкажіть назву подорожі');
             return
         }
 
@@ -92,6 +62,15 @@ export default function NewTripScreen() {
         return (
             <View style={styles.center}>
                 <ActivityIndicator/>
+            </View>
+        );
+    }
+
+
+    if (error) {
+        return (
+            <View style={styles.center}>
+                <Text style={styles.muted}>Не вдалося завантажити подорожі</Text>
             </View>
         );
     }
@@ -116,7 +95,6 @@ export default function NewTripScreen() {
                     autoCorrect={false}
                     autoComplete="name"
                     returnKeyType="next"
-                    // onSubmitEditing={() => passwordRef.current?.focus()}
                     editable={!isLoading}
                 />
             </View>
@@ -134,7 +112,6 @@ export default function NewTripScreen() {
                     autoCapitalize="none"
                     autoCorrect={false}
                     returnKeyType="next"
-                    // onSubmitEditing={() => passwordRef.current?.focus()}
                     editable={!isLoading}
                 />
             </View>
@@ -213,6 +190,7 @@ const styles = StyleSheet.create({
         color: colors.error,
         fontSize: 14,
     },
+    muted: {fontSize: 14, color: '#6B6B66'},
     button: {
         height: 52,
         borderRadius: 26,

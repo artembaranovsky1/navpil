@@ -7,24 +7,24 @@ import {joinTrip} from "@/api/trips";
 import {router} from "expo-router";
 import {ApiError} from "@/api/ApiError";
 import {useAuth} from "@/context/auth";
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 
 export default function JoinScreen() {
     const {signOut} = useAuth()
 
     const [code, setCode] = useState<string>('');
     const [error, setError] = useState<string>('');
-    const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = async () => {
-        setIsLoading(true);
-        setError("");
+    const queryClient = useQueryClient();
 
-        try {
-            await joinTrip(code)
+    const {mutate, isPending} = useMutation({
+        mutationFn: joinTrip,
+        onSuccess: async (data) => {
+            queryClient.invalidateQueries({queryKey: ['trips']});
 
-            router.replace(`/trips`);
-            setIsLoading(false);
-        } catch (error) {
+            router.push('../trips')
+        },
+        onError: async (error) => {
             if (error instanceof ApiError && error.status === 404) {
                 setError('Подорож з таким кодом не знайдено');
             } else if (error instanceof ApiError && error.status === 422) {
@@ -35,15 +35,32 @@ export default function JoinScreen() {
             } else {
                 setError('Немає з’єднання з сервером');
             }
-        } finally {
-            setIsLoading(false);
         }
+    })
+
+
+    const handleSubmit = () => {
+        if (!code.trim()) {
+            setError('Вкажіть код')
+        }
+
+        setError('')
+        mutate(code)
     }
 
-    if (isLoading) {
+
+    if (isPending) {
         return (
             <View style={styles.center}>
                 <ActivityIndicator/>
+            </View>
+        );
+    }
+
+    if (error) {
+        return (
+            <View style={styles.center}>
+                <Text style={styles.muted}>Не вдалося завантажити подорожі</Text>
             </View>
         );
     }
@@ -68,7 +85,7 @@ export default function JoinScreen() {
                     autoCorrect={false}
                     returnKeyType="next"
                     // onSubmitEditing={() => passwordRef.current?.focus()}
-                    editable={!isLoading}
+                    editable={!isPending}
                 />
             </View>
 
@@ -136,6 +153,7 @@ const styles = StyleSheet.create({
         color: colors.error,
         fontSize: 14,
     },
+    muted: {fontSize: 14, color: '#6B6B66'},
     button: {
         height: 52,
         borderRadius: 26,
