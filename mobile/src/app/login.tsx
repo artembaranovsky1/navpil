@@ -12,8 +12,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 
+
 import { login } from '@/api/auth';
 import { ApiError } from '@/api/ApiError';
+import {useAuth} from "@/context/auth";
 
 const colors = {
     background: '#FAFAF9',
@@ -26,6 +28,8 @@ const colors = {
 };
 
 export default function LoginScreen() {
+    const { signIn } = useAuth()
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -45,9 +49,8 @@ export default function LoginScreen() {
 
         try {
             const { token } = await login(email.trim(), password);
+            await signIn(token);
 
-            await SecureStore.setItemAsync('token', token);
-            router.replace('/');
         } catch (err) {
             if (err instanceof ApiError && err.status === 401) {
                 setError('Невірний email або пароль');

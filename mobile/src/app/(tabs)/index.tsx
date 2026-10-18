@@ -10,6 +10,7 @@ import {WebBadge} from '@/components/web-badge';
 import {BottomTabInset, MaxContentWidth, Spacing} from '@/constants/theme';
 import {useEffect, useState} from "react";
 import {getTrips, TripResponse} from "@/api/trips";
+import {useAuth} from "@/context/auth";
 
 function getDevMenuHint() {
 
@@ -33,6 +34,7 @@ function getDevMenuHint() {
 
 
 export default function HomeScreen() {
+    const { signOut } = useAuth();
 
     const [trips, setTrips] = useState<TripResponse[]>([]);
     let [count, setCount] = useState<number>(0);
@@ -68,6 +70,9 @@ export default function HomeScreen() {
                 {/*    ))}*/}
                 {/*</View>*/}
 
+                <Pressable onPress={signOut} style={{ padding: 12 }}>
+                    <Text style={{ color: 'white', fontSize: 24 }}>Вийти</Text>
+                </Pressable>
 
                 <Pressable
                     onPress={() => setCount(count + 1)}
