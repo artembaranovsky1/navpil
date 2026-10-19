@@ -78,8 +78,24 @@ export default function AppTabs() {
                 />
             </NativeTabs.Trigger>
 
-            <NativeTabs.Trigger name="trip/[id]/newExpense">
+            <NativeTabs.Trigger name="trip/[id]/expenses/new">
                 <NativeTabs.Trigger.Label>newExpense</NativeTabs.Trigger.Label>
+                <NativeTabs.Trigger.Icon
+                    // src={require('@/assets/images/icon.png')}
+                    renderingMode="template"
+                />
+            </NativeTabs.Trigger>
+
+            <NativeTabs.Trigger name="trip/[id]/expenses/[expenseId]/index">
+                <NativeTabs.Trigger.Label>Expense</NativeTabs.Trigger.Label>
+                <NativeTabs.Trigger.Icon
+                    // src={require('@/assets/images/icon.png')}
+                    renderingMode="template"
+                />
+            </NativeTabs.Trigger>
+
+            <NativeTabs.Trigger name="trip/[id]/expenses/[expenseId]/editing">
+                <NativeTabs.Trigger.Label>ExpenseEditing</NativeTabs.Trigger.Label>
                 <NativeTabs.Trigger.Icon
                     // src={require('@/assets/images/icon.png')}
                     renderingMode="template"
@@ -96,6 +112,14 @@ export default function AppTabs() {
 
             <NativeTabs.Trigger name="trip/[id]/settle">
                 <NativeTabs.Trigger.Label>settle</NativeTabs.Trigger.Label>
+                <NativeTabs.Trigger.Icon
+                    // src={require('@/assets/images/icon.png')}
+                    renderingMode="template"
+                />
+            </NativeTabs.Trigger>
+
+            <NativeTabs.Trigger name="trip/[id]/member">
+                <NativeTabs.Trigger.Label>Member</NativeTabs.Trigger.Label>
                 <NativeTabs.Trigger.Icon
                     // src={require('@/assets/images/icon.png')}
                     renderingMode="template"

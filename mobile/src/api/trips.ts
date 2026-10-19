@@ -83,3 +83,14 @@ export const joinTrip = async (code: string): Promise<TripResponse> => {
 
     return handleResponse(response);
 }
+
+export const getTrip = async (tripId: string): Promise<TripResponse> => {
+
+    const response = await fetch(`${API_URL}/rooms/${tripId}`, {
+        headers: await authHeaders(),
+    });
+
+
+    return handleResponse<TripResponse>(response);
+}
+

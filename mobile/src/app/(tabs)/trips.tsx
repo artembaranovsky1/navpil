@@ -4,36 +4,17 @@ import {getTrips, TripResponse, TripsResponse} from "@/api/trips";
 import {ThemedText} from "@/components/themed-text";
 import {ApiError} from "@/api/ApiError";
 import {useAuth} from "@/context/auth";
-import {router} from "expo-router";
+import {router, useLocalSearchParams} from "expo-router";
 import {SafeAreaView} from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
 import {useQuery} from "@tanstack/react-query";
+import {useMe} from "@/hooks/use-me";
 
 export default function TripsScreen() {
     const {signOut} = useAuth();
-    // const [trips, setTrips] = useState<TripsResponse | null>(null);
-    // const [isLoading, setIsLoading] = useState(false);
-    // const [error, setError] = useState('');
 
-    // useEffect(() => {
-    //     const loadTrips = async () => {
-    //         try {
-    //             const data = await getTrips();
-    //             setTrips(data);
-    //         } catch (err) {
-    //             if (err instanceof ApiError && err.status === 401) {
-    //                 await signOut();
-    //
-    //                 return;
-    //             }
-    //             setError('Не вдалося завантажити подорожі')
-    //         } finally {
-    //             setIsLoading(false);
-    //         }
-    //     }
-    //
-    //     loadTrips()
-    // }, []);
+    // const { data: me } = useMe();
+
 
     const { data: trips, isLoading, error } = useQuery({
         queryKey: ['trips'],
