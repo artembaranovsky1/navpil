@@ -6,14 +6,14 @@ import {useQuery} from '@tanstack/react-query';
 import {colors} from '@/color';
 import {getExpense, CATEGORY_LABELS} from '@/api/expense';
 import {getTrip} from '@/api/trips';
-import {useMe} from '@/hooks/use-me';
 import {formatMoney, formatTripDates} from '@/context/format';
 import {getExpenseShares} from '@/utils/settle';
 import {CATEGORY_COLORS, getAvatarColor} from '@/utils/colors';
+import {useMe} from "@/hooks/queries";
 
 export default function ExpenseDetailsScreen() {
     const {id: tripId, expenseId} = useLocalSearchParams<{ id: string; expenseId: string }>();
-    const {data: me} = useMe();
+    const {data: me} = useMe()
 
     const {data: expense, isLoading, error} = useQuery({
         queryKey: ['expense', tripId, expenseId],

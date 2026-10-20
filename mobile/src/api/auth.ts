@@ -1,5 +1,4 @@
 import {ApiError} from "@/api/ApiError";
-import * as SecureStore from 'expo-secure-store';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -24,7 +23,7 @@ export const login = async (email: string, password: string): Promise<LoginRespo
     const data = await response.json();
 
     if (!response.ok) {
-        throw new ApiError(response.status, 'Login failed', null);
+        throw new ApiError(response.status, data.error, data.details);
     }
 
     return data;

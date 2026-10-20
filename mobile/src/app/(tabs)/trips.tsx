@@ -1,40 +1,16 @@
 import {ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
-import {useEffect, useState} from "react";
-import {getTrips, TripResponse, TripsResponse} from "@/api/trips";
-import {ThemedText} from "@/components/themed-text";
+import {useEffect} from "react";
+import {TripResponse} from "@/api/trips";
 import {ApiError} from "@/api/ApiError";
 import {useAuth} from "@/context/auth";
-import {router, useLocalSearchParams} from "expo-router";
+import {router} from "expo-router";
 import {SafeAreaView} from "react-native-safe-area-context";
-import { Ionicons } from '@expo/vector-icons';
-import {useQuery} from "@tanstack/react-query";
-import {useMe} from "@/hooks/use-me";
+import {Ionicons} from '@expo/vector-icons';
+import {useTrips} from "@/hooks/queries";
 
 export default function TripsScreen() {
-    const {signOut} = useAuth();
 
-    // const { data: me } = useMe();
-
-
-    const { data: trips, isLoading, error } = useQuery({
-        queryKey: ['trips'],
-        queryFn: getTrips,
-        retry: (count, err) => !(err instanceof ApiError && err.status === 401) && count < 2,
-    });
-
-    useEffect(() => {
-        if (error instanceof ApiError && error.status === 401) {
-            signOut();
-        }
-    }, [error]);
-
-    if (isLoading) {
-        return (
-            <View style={styles.center}>
-                <ActivityIndicator/>
-            </View>
-        );
-    }
+    const {data: trips, isLoading, error} = useTrips()
 
     if (error) {
         return (
@@ -44,6 +20,13 @@ export default function TripsScreen() {
         );
     }
 
+    if (isLoading) {
+        return (
+            <View style={styles.center}>
+                <ActivityIndicator/>
+            </View>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -66,7 +49,7 @@ export default function TripsScreen() {
                         style={({pressed}) => [styles.primaryButton, pressed && {opacity: 0.85}]}
                         onPress={() => router.push(`/trip/newTrip`)}
                     >
-                        <Ionicons name="add" size={20} color="#FFFFFF" />
+                        <Ionicons name="add" size={20} color="#FFFFFF"/>
                         <Text style={styles.primaryButtonText}>Нова подорож</Text>
                     </Pressable>
                 </View>

@@ -7,11 +7,12 @@ import {getTrip} from "@/api/trips";
 import {ApiError} from "@/api/ApiError";
 import {useEffect} from "react";
 import {useAuth} from "@/context/auth";
-import {useMe} from "@/hooks/use-me";
+
 import {formatMoney, formatSignedMoney, formatTripDates} from "@/context/format";
 import {calculateSettlement, countTripDays, totalAmount} from "@/utils/settle";
 import {getExpenses} from "@/api/expense";
 import {getPayments} from "@/api/payments";
+import {useMe} from "@/hooks/queries";
 
 export default function TripScreen() {
 

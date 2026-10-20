@@ -1,6 +1,7 @@
 import {createContext, useContext, useEffect, useState, type ReactNode} from 'react';
 import * as SecureStore from 'expo-secure-store';
 import {useQueryClient} from "@tanstack/react-query";
+import {setUnauthorizedHandler} from "@/api/auth-events";
 
 type AuthContextValue = {
     token: string | null;
@@ -29,10 +30,14 @@ export const AuthProvider = ({children}: { children: ReactNode }) => {
     }
 
     const signOut = async () => {
-        await SecureStore.deleteItemAsync('token')
-        setToken(null);
+        await SecureStore.deleteItemAsync('token');
         queryClient.clear();
+        setToken(null);
     }
+
+    useEffect(() => {
+        setUnauthorizedHandler(signOut)
+    }, []);
 
     return (
         <AuthContext.Provider value={{token, isLoading, signIn, signOut}}>

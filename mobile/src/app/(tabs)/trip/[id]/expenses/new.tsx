@@ -16,16 +16,16 @@ import React, {useMemo, useState} from 'react';
 import RadioGroup from 'react-native-radio-buttons-group';
 import {router, useLocalSearchParams} from "expo-router";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import {useMe} from "@/hooks/use-me";
 import {getTrip} from "@/api/trips";
 import {toApiDate} from "@/api/helper";
 import {ApiError} from "@/api/ApiError";
 import {Chip} from "@/components/chip";
+import {useMe} from "@/hooks/queries";
 
 export default function NewExpenseScreen() {
     const {id: tripId} = useLocalSearchParams<{ id: string }>();
     const queryClient = useQueryClient();
-    const {data: me} = useMe();
+    const {data: me} = useMe()
 
     const {data: trip, isLoading} = useQuery({
         queryKey: ['trip', tripId],

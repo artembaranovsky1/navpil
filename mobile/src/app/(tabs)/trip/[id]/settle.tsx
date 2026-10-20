@@ -1,6 +1,5 @@
 import {ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {router, useLocalSearchParams} from "expo-router";
-import {useMe} from "@/hooks/use-me";
 import {useQuery, useQueryClient} from "@tanstack/react-query";
 import {getTrip, TripMember, TripResponse} from "@/api/trips";
 import {ApiError} from "@/api/ApiError";
@@ -13,6 +12,7 @@ import {calculateSettlement, getMemberName, Transfer} from "@/utils/settle";
 import {formatMoney, formatSignedMoney, formatTripDates} from "@/context/format";
 import { createPayment, getPayments, PaymentResponse } from '@/api/payments';
 import { DimensionValue } from 'react-native';
+import {useMe} from "@/hooks/queries";
 
 type SettlementProps = {
     trip: TripResponse;

@@ -19,15 +19,13 @@ import {
     updateExpense
 } from "@/api/expense";
 import {DateField} from "@/components/date-field";
-import React, {useMemo, useState} from 'react';
-import RadioGroup from 'react-native-radio-buttons-group';
+import { useState} from 'react';
 import {router, useLocalSearchParams} from "expo-router";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import {useMe} from "@/hooks/use-me";
 import {getTrip, TripResponse} from "@/api/trips";
-import {toApiDate} from "@/api/helper";
 import {ApiError} from "@/api/ApiError";
 import {Chip} from "@/components/chip";
+import {useMe} from "@/hooks/queries";
 
 export default function EditingExpenseScreen() {
     const {id: tripId, expenseId} = useLocalSearchParams<{ id: string; expenseId: string }>();
@@ -82,7 +80,7 @@ function ExpenseEditForm({tripId, trip, expense}: FormProps) {
 
 
     const queryClient = useQueryClient();
-    const {data: me} = useMe();
+    const {data: me} = useMe()
 
     const {mutate, isPending} = useMutation({
         mutationFn: (data: Parameters<typeof createExpense>[1]) => updateExpense(tripId, expense.id, data),
