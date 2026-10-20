@@ -58,8 +58,11 @@ function RootNavigator() {
 
     return (
         <Stack screenOptions={{headerShown: false}}>
+            <Stack.Screen name="index"/>
+
             <Stack.Protected guard={!!token}>
                 <Stack.Screen name='(tabs)'/>
+                <Stack.Screen name='trip'/>
             </Stack.Protected>
 
             <Stack.Protected guard={!token}>

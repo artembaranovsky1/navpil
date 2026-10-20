@@ -64,7 +64,7 @@ export default function TripScreen() {
                 style={({pressed}) => [styles.button, pressed && {opacity: 0.85}]}
                 onPress={() => router.push(`/trip/${tripId}/settle`)}
             >
-                <Text style={styles.buttonText}>Витрати</Text>
+                <Text style={styles.buttonText}>Розрахунок</Text>
             </Pressable>
 
 

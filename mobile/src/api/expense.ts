@@ -1,5 +1,5 @@
 import {ApiError} from "@/api/ApiError";
-import {authHeaders} from "@/api/helper";
+import {authHeaders, handleResponse} from "@/api/helper";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -55,16 +55,6 @@ export type UpdateExpenseData = {
     date?: string;
     paidById?: string;
     splitBetween?: string[];
-};
-
-const handleResponse = async <T>(response: Response): Promise<T> => {
-    const data = await response.json().catch(() => null);
-
-    if (!response.ok) {
-        throw new ApiError(response.status, data?.error ?? 'Request failed', data?.details ?? null);
-    }
-
-    return data as T;
 };
 
 

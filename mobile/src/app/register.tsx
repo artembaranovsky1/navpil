@@ -9,12 +9,10 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Link, router } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
+import { Link } from 'expo-router';
 
-import {login, register} from '@/api/auth';
+import { register} from '@/api/auth';
 import { ApiError } from '@/api/ApiError';
-import test from "node:test";
 
 
 const colors = {
@@ -86,11 +84,9 @@ export default function RegisterScreen() {
                         onBlur={() => setFocused(null)}
                         placeholder="Антон"
                         placeholderTextColor={colors.muted}
-                        keyboardType="name-address"
                         autoCapitalize="none"
                         autoCorrect={false}
                         autoComplete="name"
-                        textContentType="nameAddress"
                         returnKeyType="next"
                         onSubmitEditing={() => passwordRef.current?.focus()}
                         editable={!isLoading}

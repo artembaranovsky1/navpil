@@ -1,17 +1,22 @@
 import {
-    ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View
+    ActivityIndicator, KeyboardAvoidingView, Platform,
+    Pressable, ScrollView, StyleSheet,
+    Text, TextInput, View
 } from 'react-native';
 import {SafeAreaView} from "react-native-safe-area-context";
 import {colors} from "@/color";
-import {CATEGORY_LABELS, EXPENSE_CATEGORIES, ExpenseCategory} from "@/api/expense";
+import {
+    CATEGORY_LABELS, EXPENSE_CATEGORIES,
+    ExpenseCategory, ExpenseResponse
+} from "@/api/expense";
 import {DateField} from "@/components/date-field";
 import {useState} from 'react';
-import {router, useLocalSearchParams} from "expo-router";
-import {toApiDate} from "@/api/helper";
+import {useLocalSearchParams} from "expo-router";
+import {TripResponse} from "@/api/trips";
 import {ApiError} from "@/api/ApiError";
 import {Chip} from "@/components/chip";
-import {useMe, useTrip} from "@/hooks/queries";
-import {useCreateExpense} from "@/hooks/mutations";
+import {useExpense, useMe, useTrip} from "@/hooks/queries";
+import {useUpdateExpense} from "@/hooks/mutations";
 
 const getErrorMessage = (error: unknown) => {
     if (!error) return '';
@@ -20,27 +25,13 @@ const getErrorMessage = (error: unknown) => {
     return 'Немає з’єднання з сервером';
 }
 
-export default function NewExpenseScreen() {
-    const {id: tripId} = useLocalSearchParams<{ id: string }>();
-    const {data: me} = useMe()
+export default function EditingExpenseScreen() {
+    const {id: tripId, expenseId} = useLocalSearchParams<{ id: string; expenseId: string }>();
 
-    const {data: trip, isLoading: isTripLoading, error: tripError} = useTrip(tripId)
+    const {data: trip, isLoading: isTripLoading, error: tripError} = useTrip(tripId);
+    const {data: expense, isLoading: isExpenseLoading, error: expenseError} = useExpense(tripId, expenseId);
 
-    const [amount, setAmount] = useState('');
-    const [name, setName] = useState('');
-    const [date, setDate] = useState(toApiDate(new Date()));
-    const [description, setDescription] = useState('');
-    const [category, setCategory] = useState<ExpenseCategory>('food');
-    const [paidById, setPaidById] = useState<string | null>(null);
-    const [splitBetween, setSplitBetween] = useState<string[] | null>(null);
-    const [focused, setFocused] = useState<'amount' | 'name' | 'description' | null>(null);
-    const [formError, setFormError] = useState('');
-
-
-    const {mutate, isPending: isCreateExpensePending, error: createError} = useCreateExpense(tripId);
-    const errorMessage = formError || getErrorMessage(createError);
-
-    if (isTripLoading) {
+    if (isTripLoading || isExpenseLoading) {
         return (
             <View style={styles.center}>
                 <ActivityIndicator/>
@@ -48,60 +39,72 @@ export default function NewExpenseScreen() {
         );
     }
 
-    if (tripError || !trip) {
+    if (tripError || expenseError || !trip || !expense) {
         return (
             <View style={styles.center}>
-                <Text style={styles.muted}>Не вдалося завантажити подорож</Text>
+                <Text style={styles.error}>Не вдалося завантажити витрату</Text>
             </View>
         );
     }
-    const payer = paidById ?? me?.id ?? trip.members[0]?.id
-    const split = splitBetween ?? trip.members.map(member => member.id);
+
+    return <ExpenseEditForm tripId={tripId} trip={trip} expense={expense}/>;
+}
+
+type FormProps = {
+    tripId: string;
+    trip: TripResponse;
+    expense: ExpenseResponse;
+};
+
+function ExpenseEditForm({tripId, trip, expense}: FormProps) {
+    const [amount, setAmount] = useState(String(expense.amount));
+    const [name, setName] = useState(expense.name);
+    const [date, setDate] = useState(expense.date);
+    const [description, setDescription] = useState(expense.description ?? '');
+    const [category, setCategory] = useState<ExpenseCategory>(expense.category);
+    const [paidById, setPaidById] = useState<string>(expense.paidById ?? expense.addedById);
+    const [splitBetween, setSplitBetween] = useState<string[]>(expense.splitBetween);
+    const [focused, setFocused] = useState<'amount' | 'name' | 'description' | null>(null);
+    const [formError, setFormError] = useState('');
+
+    const {data: me} = useMe()
+
+    const {mutate, isPending, error: updateError} = useUpdateExpense(tripId, expense.id);
+    const errorMessage = formError || getErrorMessage(updateError);
+
 
     const amountNumber = Number(amount.replace(',', '.'));
-    const share = split.length > 0 && amountNumber > 0 ? amountNumber / split.length : 0;
+    const share = splitBetween.length > 0 && amountNumber > 0 ? amountNumber / splitBetween.length : 0;
 
     const toggleMember = (memberId: string) => {
-        setSplitBetween(
-            split.includes(memberId)
-                ? split.filter((x) => x !== memberId)
-                : [...split, memberId],
+        setSplitBetween((prev) =>
+            prev.includes(memberId) ? prev.filter((x) => x !== memberId) : [...prev, memberId],
         );
     };
 
     const handleSubmit = () => {
         if (!(amountNumber > 0)) return setFormError('Вкажіть суму');
         if (!name.trim()) return setFormError('Вкажіть, за що');
-        if (split.length === 0) return setFormError('Оберіть, між ким ділити');
+        if (splitBetween?.length === 0) return setFormError('Оберіть, між ким ділити');
 
         setFormError('')
         mutate({
             name: name.trim(),
             amount: amountNumber,
-            description: description.trim(),
+            description: description.trim() || undefined,
             category,
-            date,
-            paidById: payer,
-            splitBetween: split
-        }, {
-            onSuccess: () => {
-                setAmount('')
-                setName('')
-                setDescription('')
-                setDate(toApiDate(new Date()))
-                setCategory('food')
-                setPaidById(null)
-                setSplitBetween(null)
-                router.push(`/trip/${tripId}`)
-            }
+            date: date || undefined,
+            paidById,
+            splitBetween,
         })
     }
+
 
     return (
         <SafeAreaView style={styles.container}>
             <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
                 <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-                    <Text style={styles.title}>Нова витрата</Text>
+                    <Text style={styles.title}>Редагування</Text>
 
                     <View style={styles.field}>
                         <Text style={styles.label}>Сума, ₴</Text>
@@ -114,7 +117,7 @@ export default function NewExpenseScreen() {
                             placeholder="0"
                             placeholderTextColor={colors.muted}
                             keyboardType="decimal-pad"
-                            editable={!isCreateExpensePending}
+                            editable={!isPending}
                         />
                     </View>
 
@@ -129,26 +132,25 @@ export default function NewExpenseScreen() {
                             placeholder="Вечеря в колибі"
                             placeholderTextColor={colors.muted}
                             autoCapitalize="sentences"
-                            editable={!isCreateExpensePending}
+                            editable={!isPending}
                         />
                     </View>
 
-                    <DateField label="Дата" value={date} onChange={setDate} disabled={isCreateExpensePending}/>
-
                     <View style={styles.field}>
-                        <Text style={styles.label}>Опис</Text>
+                        <Text style={styles.label}>Oпис</Text>
                         <TextInput
                             style={[styles.input, focused === 'description' && styles.inputFocused]}
                             value={description}
                             onChangeText={setDescription}
                             onFocus={() => setFocused('description')}
                             onBlur={() => setFocused(null)}
-                            placeholder="Борщ, сало, ..."
                             placeholderTextColor={colors.muted}
                             autoCapitalize="sentences"
-                            editable={!isCreateExpensePending}
+                            editable={!isPending}
                         />
                     </View>
+
+                    <DateField label="Дата" value={date} onChange={setDate} disabled={isPending}/>
 
                     <View style={styles.field}>
                         <Text style={styles.label}>Категорія</Text>
@@ -172,7 +174,7 @@ export default function NewExpenseScreen() {
                                 <Chip
                                     key={m.id}
                                     label={m.id === me?.id ? `${m.name} (я)` : m.name}
-                                    selected={payer === m.id}
+                                    selected={paidById === m.id}
                                     disabled={false}
                                     onPress={() => setPaidById(m.id)}
                                 />
@@ -183,7 +185,7 @@ export default function NewExpenseScreen() {
                     <View style={styles.field}>
                         <Text style={styles.label}>Ділимо між · порівну</Text>
                         {trip.members.map((m) => {
-                            const isIn = split.includes(m.id);
+                            const isIn = splitBetween.includes(m.id);
                             return (
                                 <Pressable key={m.id} onPress={() => toggleMember(m.id)} style={styles.memberRow}>
                                     <View style={[styles.checkbox, isIn && styles.checkboxOn]}>
@@ -204,18 +206,20 @@ export default function NewExpenseScreen() {
                 <View style={styles.footer}>
                     <Pressable
                         onPress={handleSubmit}
-                        disabled={isCreateExpensePending}
-                        style={({pressed}) => [styles.primaryButton, (pressed || isCreateExpensePending) && {opacity: 0.7}]}
+                        disabled={isPending}
+                        style={({pressed}) => [styles.primaryButton, (pressed || isPending) && {opacity: 0.7}]}
                     >
                         <Text style={styles.primaryButtonText}>
-                            {isCreateExpensePending ? 'Зберігаємо…' : 'Зберегти витрату'}
+                            {isPending ? 'Зберігаємо…' : 'Зберегти витрату'}
                         </Text>
                     </Pressable>
                 </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
-    );
+    )
+
 }
+
 
 const styles = StyleSheet.create({
     container: {
@@ -351,5 +355,4 @@ const styles = StyleSheet.create({
             '500'
     }
     ,
-    muted: {fontSize: 14, color: '#6B6B66'},
 });

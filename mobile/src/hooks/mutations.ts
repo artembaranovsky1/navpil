@@ -1,7 +1,7 @@
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {createTrip, joinTrip} from "@/api/trips";
 import {router} from "expo-router";
-import {createExpense, CreateExpenseData, updateExpense} from "@/api/expense";
+import {createExpense, CreateExpenseData, updateExpense, UpdateExpenseData} from "@/api/expense";
 import {ApiError} from "@/api/ApiError";
 
 export const useJoinTrip = () => {
@@ -43,7 +43,7 @@ export const useUpdateExpense = (tripId: string, expenseId: string) => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (data: Parameters<typeof createExpense>[1]) => updateExpense(tripId, expenseId, data),
+        mutationFn: (data: UpdateExpenseData) => updateExpense(tripId, expenseId, data),
         onSuccess: () => {
             queryClient.invalidateQueries({queryKey: ['expenses', tripId]});
             queryClient.invalidateQueries({queryKey: ['expense', tripId, expenseId]});

@@ -9,7 +9,7 @@ import {colors} from "@/color";
 import {SafeAreaView} from "react-native-safe-area-context";
 import {calculateSettlement, getMemberName, Transfer} from "@/utils/settle";
 import {formatMoney, formatSignedMoney, formatTripDates} from "@/context/format";
-import {createPayment, getPayments, PaymentResponse} from '@/api/payments';
+import {createPayment, PaymentResponse} from '@/api/payments';
 import {DimensionValue} from 'react-native';
 import {useExpenses, useMe, usePayments, useTrip} from "@/hooks/queries";
 

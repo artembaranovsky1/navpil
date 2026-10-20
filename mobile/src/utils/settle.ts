@@ -1,5 +1,6 @@
 import {ExpenseResponse} from "@/api/expense";
 import {TripMember, TripResponse} from "@/api/trips";
+import { PaymentResponse } from '@/api/payments';
 
 export type MemberBalance = {
     id: string;

@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
+import {ApiError} from "@/api/ApiError";
 
 export const authHeaders = async () => {
     const token = await SecureStore.getItemAsync('token');
@@ -17,4 +18,14 @@ export const toApiDate = (date: Date) => {
 export const fromApiDate = (value: string) => {
     const [y, m, d] = value.split('-').map(Number);
     return new Date(y, m - 1, d);
+};
+
+export const handleResponse = async <T>(response: Response): Promise<T> => {
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+        throw new ApiError(response.status, data?.error ?? 'Request failed', data?.details ?? null);
+    }
+
+    return data as T;
 };

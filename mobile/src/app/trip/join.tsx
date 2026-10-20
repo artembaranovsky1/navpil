@@ -21,21 +21,21 @@ export default function JoinScreen() {
 
     const errorMessage = getErrorMessage(error)
 
-    if (isPending) {
-        return (
-            <View style={styles.center}>
-                <ActivityIndicator/>
-            </View>
-        );
-    }
-
-    if (error) {
-        return (
-            <View style={styles.center}>
-                <Text style={styles.muted}>Не вдалося завантажити подорожі</Text>
-            </View>
-        );
-    }
+    // if (isPending) {
+    //     return (
+    //         <View style={styles.center}>
+    //             <ActivityIndicator/>
+    //         </View>
+    //     );
+    // }
+    //
+    // if (error) {
+    //     return (
+    //         <View style={styles.center}>
+    //             <Text style={styles.muted}>Не вдалося завантажити подорожі</Text>
+    //         </View>
+    //     );
+    // }
 
 
     return (
@@ -49,7 +49,7 @@ export default function JoinScreen() {
                     style={styles.input}
                     value={code}
                     onChangeText={setCode}
-                    placeholder="Сухаріки Flint"
+                    placeholder="H5FJO1"
                     placeholderTextColor={colors.muted}
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -61,10 +61,7 @@ export default function JoinScreen() {
             {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
 
             <Pressable
-                onPress={() => {
-                    mutate(code.trim())
-                    setCode('')
-                }}
+                onPress={() => mutate(code.trim())}
                 style={({pressed}) => [styles.primaryButton, pressed && {opacity: 0.85}]}
 
             >
