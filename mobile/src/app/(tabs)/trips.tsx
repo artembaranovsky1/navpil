@@ -1,8 +1,5 @@
 import {ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
-import {useEffect} from "react";
 import {TripResponse} from "@/api/trips";
-import {ApiError} from "@/api/ApiError";
-import {useAuth} from "@/context/auth";
 import {router} from "expo-router";
 import {SafeAreaView} from "react-native-safe-area-context";
 import {Ionicons} from '@expo/vector-icons';

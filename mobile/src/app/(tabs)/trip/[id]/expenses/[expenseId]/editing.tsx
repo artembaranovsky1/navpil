@@ -1,46 +1,35 @@
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable, ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View
+    ActivityIndicator, KeyboardAvoidingView, Platform,
+    Pressable, ScrollView, StyleSheet,
+    Text, TextInput, View
 } from 'react-native';
 import {SafeAreaView} from "react-native-safe-area-context";
 import {colors} from "@/color";
 import {
-    CATEGORY_LABELS,
-    createExpense,
-    EXPENSE_CATEGORIES,
-    ExpenseCategory, ExpenseResponse,
-    getExpense,
-    updateExpense
+    CATEGORY_LABELS, EXPENSE_CATEGORIES,
+    ExpenseCategory, ExpenseResponse
 } from "@/api/expense";
 import {DateField} from "@/components/date-field";
-import { useState} from 'react';
-import {router, useLocalSearchParams} from "expo-router";
-import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import {getTrip, TripResponse} from "@/api/trips";
+import {useState} from 'react';
+import {useLocalSearchParams} from "expo-router";
+import {TripResponse} from "@/api/trips";
 import {ApiError} from "@/api/ApiError";
 import {Chip} from "@/components/chip";
-import {useMe} from "@/hooks/queries";
+import {useExpense, useMe, useTrip} from "@/hooks/queries";
+import {useUpdateExpense} from "@/hooks/mutations";
+
+const getErrorMessage = (error: unknown) => {
+    if (!error) return '';
+    if (error instanceof ApiError && error.status === 422) return 'Перевірте поля форми';
+    if (error instanceof ApiError) return 'Щось пішло не так, спробуйте ще раз';
+    return 'Немає з’єднання з сервером';
+}
 
 export default function EditingExpenseScreen() {
     const {id: tripId, expenseId} = useLocalSearchParams<{ id: string; expenseId: string }>();
 
-    const {data: trip, isLoading: isTripLoading} = useQuery({
-        queryKey: ['trip', tripId],
-        queryFn: () => getTrip(tripId),
-        enabled: !!tripId,
-    });
-
-    const {data: expense, isLoading: isExpenseLoading, error} = useQuery({
-        queryKey: ['expense', tripId, expenseId],
-        queryFn: () => getExpense(tripId, expenseId),
-        enabled: !!tripId && !!expenseId,
-    });
+    const {data: trip, isLoading: isTripLoading, error: tripError} = useTrip(tripId);
+    const {data: expense, isLoading: isExpenseLoading, error: expenseError} = useExpense(tripId, expenseId);
 
     if (isTripLoading || isExpenseLoading) {
         return (
@@ -50,7 +39,7 @@ export default function EditingExpenseScreen() {
         );
     }
 
-    if (error || !trip || !expense) {
+    if (tripError || expenseError || !trip || !expense) {
         return (
             <View style={styles.center}>
                 <Text style={styles.error}>Не вдалося завантажити витрату</Text>
@@ -73,29 +62,16 @@ function ExpenseEditForm({tripId, trip, expense}: FormProps) {
     const [date, setDate] = useState(expense.date);
     const [description, setDescription] = useState(expense?.description);
     const [category, setCategory] = useState<ExpenseCategory>(expense.category);
-    const [paidById, setPaidById] = useState<string | null>(expense.paidById ?? expense.addedById);
-    const [splitBetween, setSplitBetween] = useState<string[] | null>(expense.splitBetween);
+    const [paidById, setPaidById] = useState<string>(expense.paidById ?? expense.addedById);
+    const [splitBetween, setSplitBetween] = useState<string[]>(expense.splitBetween);
     const [focused, setFocused] = useState<'amount' | 'name' | 'description' | null>(null);
-    const [error, setError] = useState('');
+    const [formError, setFormError] = useState('');
 
-
-    const queryClient = useQueryClient();
     const {data: me} = useMe()
 
-    const {mutate, isPending} = useMutation({
-        mutationFn: (data: Parameters<typeof createExpense>[1]) => updateExpense(tripId, expense.id, data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({queryKey: ['expenses', tripId]});
-            router.back()
-        },
-        onError: (err) => {
-            if (err instanceof ApiError && err.status === 422) {
-                setError('Перевірте поля форми');
-            } else {
-                setError('Не вдалося зберегти витрату');
-            }
-        }
-    })
+    const {mutate, isPending, error: updateError} = useUpdateExpense(tripId, expense.id);
+    const errorMessage = formError || getErrorMessage(updateError);
+
 
     const amountNumber = Number(amount.replace(',', '.'));
     const share = splitBetween.length > 0 && amountNumber > 0 ? amountNumber / splitBetween.length : 0;
@@ -107,11 +83,11 @@ function ExpenseEditForm({tripId, trip, expense}: FormProps) {
     };
 
     const handleSubmit = () => {
-        if (!(amountNumber > 0)) return setError('Вкажіть суму');
-        if (!name.trim()) return setError('Вкажіть, за що');
-        if (splitBetween?.length === 0) return setError('Оберіть, між ким ділити');
+        if (!(amountNumber > 0)) return setFormError('Вкажіть суму');
+        if (!name.trim()) return setFormError('Вкажіть, за що');
+        if (splitBetween?.length === 0) return setFormError('Оберіть, між ким ділити');
 
-        setError('')
+        setFormError('')
         mutate({
             name: name.trim(),
             amount: amountNumber,
@@ -135,7 +111,6 @@ function ExpenseEditForm({tripId, trip, expense}: FormProps) {
                         <TextInput
                             style={[styles.input, styles.amountInput, focused === 'amount' && styles.inputFocused]}
                             value={amount}
-                            type="number"
                             onChangeText={setAmount}
                             onFocus={() => setFocused('amount')}
                             onBlur={() => setFocused(null)}
@@ -225,7 +200,7 @@ function ExpenseEditForm({tripId, trip, expense}: FormProps) {
                         })}
                     </View>
 
-                    {error ? <Text style={styles.error}>{error}</Text> : null}
+                    {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
                 </ScrollView>
 
                 <View style={styles.footer}>

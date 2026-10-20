@@ -2,52 +2,24 @@ import {ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View} from 'r
 import {colors} from "@/color";
 import {SafeAreaView} from "react-native-safe-area-context";
 import {useState} from "react";
-import {Ionicons} from "@expo/vector-icons";
-import {joinTrip} from "@/api/trips";
-import {router} from "expo-router";
 import {ApiError} from "@/api/ApiError";
-import {useAuth} from "@/context/auth";
-import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import {useJoinTrip} from "@/hooks/mutations";
+
+const getErrorMessage = (error: unknown) => {
+    if (!error) return '';
+    if (error instanceof ApiError && error.status === 404) return 'Подорож з таким кодом не знайдено';
+    if (error instanceof ApiError && error.status === 422) return 'Код має містити 6 символів';
+    if (error instanceof ApiError && error.status === 409) return 'Ти вже в цій подорожі';
+    if (error instanceof ApiError) return 'Щось пішло не так, спробуйте ще раз';
+    return 'Немає з’єднання з сервером';
+}
 
 export default function JoinScreen() {
-    const {signOut} = useAuth()
 
     const [code, setCode] = useState<string>('');
-    const [error, setError] = useState<string>('');
+    const {mutate, isPending, error} = useJoinTrip()
 
-    const queryClient = useQueryClient();
-
-    const {mutate, isPending} = useMutation({
-        mutationFn: joinTrip,
-        onSuccess: async (data) => {
-            queryClient.invalidateQueries({queryKey: ['trips']});
-
-            router.push('../trips')
-        },
-        onError: async (error) => {
-            if (error instanceof ApiError && error.status === 404) {
-                setError('Подорож з таким кодом не знайдено');
-            } else if (error instanceof ApiError && error.status === 422) {
-                setError('Код має містити 6 символів');
-            } else if (error instanceof ApiError && error.status === 401) {
-                await signOut();
-                router.push('/login');
-            } else {
-                setError('Немає з’єднання з сервером');
-            }
-        }
-    })
-
-
-    const handleSubmit = () => {
-        if (!code.trim()) {
-            setError('Вкажіть код')
-        }
-
-        setError('')
-        mutate(code)
-    }
-
+    const errorMessage = getErrorMessage(error)
 
     if (isPending) {
         return (
@@ -77,27 +49,29 @@ export default function JoinScreen() {
                     style={styles.input}
                     value={code}
                     onChangeText={setCode}
-                    // onFocus={() => setFocused('name')}
-                    // onBlur={() => setFocused(null)}
                     placeholder="Сухаріки Flint"
                     placeholderTextColor={colors.muted}
                     autoCapitalize="none"
                     autoCorrect={false}
                     returnKeyType="next"
-                    // onSubmitEditing={() => passwordRef.current?.focus()}
                     editable={!isPending}
                 />
             </View>
 
+            {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
+
             <Pressable
-                onPress={handleSubmit}
+                onPress={() => {
+                    mutate(code.trim())
+                    setCode('')
+                }}
                 style={({pressed}) => [styles.primaryButton, pressed && {opacity: 0.85}]}
 
             >
                 <Text style={styles.primaryButtonText}>Приєднатися</Text>
             </Pressable>
         </SafeAreaView>
-            )
+    )
 }
 
 

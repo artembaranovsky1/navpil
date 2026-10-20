@@ -1,54 +1,19 @@
 import {ActivityIndicator, Pressable, StyleSheet, Text, View} from 'react-native';
 import {router, useLocalSearchParams} from "expo-router";
-import {SafeAreaView} from "react-native-safe-area-context";
 import {colors} from "@/color";
-import {useQuery} from "@tanstack/react-query";
-import {getTrip} from "@/api/trips";
-import {ApiError} from "@/api/ApiError";
-import {useEffect} from "react";
-import {useAuth} from "@/context/auth";
-
 import {formatMoney, formatSignedMoney, formatTripDates} from "@/context/format";
 import {calculateSettlement, countTripDays, totalAmount} from "@/utils/settle";
-import {getExpenses} from "@/api/expense";
-import {getPayments} from "@/api/payments";
-import {useMe} from "@/hooks/queries";
+import {useExpenses, useMe, usePayments, useTrip} from "@/hooks/queries";
+import {SafeAreaView} from "react-native-safe-area-context";
 
 export default function TripScreen() {
-
-    const {signOut} = useAuth();
     const { id: tripId } = useLocalSearchParams<{ id: string }>();
     const { data: me } = useMe();
+    const { data: trip, isLoading: isTripLoading, error: tripError } = useTrip(tripId);
+    const { data: expenses = [], isLoading: isExpensesLoading, error: expensesError } = useExpenses(tripId);
+    const { data: payments = [], isLoading: isPaymentsLoading, error: paymentsError } = usePayments(tripId);
 
-    const {data: trip, isLoading, error} = useQuery({
-        queryKey: ['trip', tripId],
-        queryFn: () => getTrip(tripId),
-        enabled: !!tripId,
-        retry: (count, err) => !(err instanceof ApiError && err.status === 401) && count < 2,
-    })
-
-    const {data: expenses = [], isLoading: isExpensesLoading, error: expensesError} = useQuery({
-        queryKey: ['expenses', tripId],
-        queryFn: () => getExpenses(tripId),
-        enabled: !!tripId,
-        retry: (count, err) => !(err instanceof ApiError && err.status === 401) && count < 2,
-    })
-
-    const {data: payments = [], isLoading: isPaymentsLoading, error: paymentsError} = useQuery({
-        queryKey: ['payments', tripId],
-        queryFn: () => getPayments(tripId),
-        enabled: !!tripId,
-        retry: (count, err) => !(err instanceof ApiError && err.status === 401) && count < 2,
-    })
-
-    useEffect(() => {
-        const err = error ?? expensesError ?? paymentsError;
-        if (err instanceof ApiError && err.status === 401) {   // err, а не error
-            signOut();
-        }
-    }, [error, expensesError, paymentsError]);
-
-    if (isLoading || isExpensesLoading || isPaymentsLoading) {
+    if (isTripLoading || isExpensesLoading || isPaymentsLoading) {
         return (
             <View style={styles.center}>
                 <ActivityIndicator />
@@ -56,7 +21,7 @@ export default function TripScreen() {
         );
     }
 
-    if (error || expensesError || paymentsError || !trip) {
+    if (tripError || expensesError || paymentsError || !trip) {
         return (
             <View style={styles.center}>
                 <Text style={styles.muted}>Не вдалося завантажити подорож</Text>
@@ -64,31 +29,14 @@ export default function TripScreen() {
         );
     }
 
-    const dates = formatTripDates(trip?.startDate, trip?.endDate);
-    const {balances, remaining} = calculateSettlement(trip.members, expenses, payments);
+    const dates = formatTripDates(trip.startDate, trip.endDate);
+    const { balances, remaining } = calculateSettlement(trip.members, expenses, payments);
 
     const total = totalAmount(expenses);
-    const myRemaining = me.id ? remaining[me.id] ?? 0 : 0;
-    const myShare = balances.find((balance) => balance.id === me.id)?.share ?? 0;
-    const perDay = total / countTripDays(trip);
-
-    if (isLoading) {
-        return (
-            <View style={styles.center}>
-                <ActivityIndicator/>
-            </View>
-        );
-    }
-
-    if (error || !trip) {
-        return (
-            <View style={styles.center}>
-                <Text style={styles.muted}>Не вдалося завантажити подорож</Text>
-            </View>
-        );
-    }
-
-
+    const myRemaining = me?.id ? remaining[me.id] ?? 0 : 0;
+    const myShare = balances.find((b) => b.id === me?.id)?.share ?? 0;
+    const days = countTripDays(trip);
+    const perDay = days > 0 ? total / days : 0;
 
     return (
         <SafeAreaView style={styles.container}>
@@ -96,7 +44,6 @@ export default function TripScreen() {
                 <Text style={styles.muted}>{trip.name} · {dates && `${dates}`} {trip.inviteCode}</Text>
                 <Text style={styles.title}>{formatMoney(total)} ₴</Text>
                 <Text style={styles.muted}>твій баланс {formatSignedMoney(myRemaining)} ₴</Text>
-
 
 
                 {expenses.map((expense) => (
@@ -119,7 +66,6 @@ export default function TripScreen() {
             >
                 <Text style={styles.buttonText}>Витрати</Text>
             </Pressable>
-
 
 
             <Pressable

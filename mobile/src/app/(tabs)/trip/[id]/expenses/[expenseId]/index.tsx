@@ -1,33 +1,21 @@
 import {ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {router, useLocalSearchParams} from 'expo-router';
-import {useQuery} from '@tanstack/react-query';
-
 import {colors} from '@/color';
-import {getExpense, CATEGORY_LABELS} from '@/api/expense';
-import {getTrip} from '@/api/trips';
+import {CATEGORY_LABELS} from '@/api/expense';
 import {formatMoney, formatTripDates} from '@/context/format';
 import {getExpenseShares} from '@/utils/settle';
 import {CATEGORY_COLORS, getAvatarColor} from '@/utils/colors';
-import {useMe} from "@/hooks/queries";
+import {useExpense, useMe, useTrip} from "@/hooks/queries";
 
 export default function ExpenseDetailsScreen() {
     const {id: tripId, expenseId} = useLocalSearchParams<{ id: string; expenseId: string }>();
     const {data: me} = useMe()
 
-    const {data: expense, isLoading, error} = useQuery({
-        queryKey: ['expense', tripId, expenseId],
-        queryFn: () => getExpense(tripId, expenseId),
-        enabled: !!tripId && !!expenseId,
-    });
+    const {data: trip, isLoading: isTripLoading, error: tripError} = useTrip(tripId);
+    const {data: expense, isLoading: isExpenseLoading, error: expenseError} = useExpense(tripId, expenseId);
 
-    const {data: trip, isLoading: isTripLoading, error: tripError} = useQuery({
-        queryKey: ['trip', tripId],
-        queryFn: () => getTrip(tripId),
-        enabled: !!tripId,
-    });
-
-    if (isLoading || isTripLoading) {
+    if (isExpenseLoading || isTripLoading) {
         return (
             <View style={styles.center}>
                 <ActivityIndicator/>
@@ -35,7 +23,7 @@ export default function ExpenseDetailsScreen() {
         );
     }
 
-    if (error || tripError || !expense || !trip) {
+    if (expenseError || tripError || !expense || !trip) {
         return (
             <View style={styles.center}>
                 <Text style={styles.muted}>Не вдалося завантажити витрату</Text>

@@ -1,80 +1,45 @@
-import {ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View} from 'react-native';
-import {useAuth} from "@/context/auth";
-import {useState} from "react";
-import {SafeAreaView} from "react-native-safe-area-context";
-import {DateField} from "@/components/date-field";
-import {router} from "expo-router";
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { DateField } from '@/components/date-field';
+import { ApiError } from '@/api/ApiError';
+import { colors } from '@/color';
+import { useCreateTrip } from '@/hooks/mutations';
 import {Ionicons} from "@expo/vector-icons";
-import {createTrip} from "@/api/trips";
-import {ApiError} from "@/api/ApiError";
-import {colors} from "@/color";
-import {useMutation, useQueryClient} from "@tanstack/react-query";
+
+const getErrorMessage = (error: unknown) => {
+    if (!error) return '';
+    if (error instanceof ApiError && error.status === 422) return 'Перевірте поля форми';
+    if (error instanceof ApiError) return 'Не вдалося створити подорож, спробуйте ще раз';
+    return 'Немає з’єднання з сервером';
+};
 
 export default function NewTripScreen() {
-    const {signOut} = useAuth()
-
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
-    const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [focused, setFocused] = useState<'name' | 'description' | 'startDate' | 'endDate' | null>(null);
+    const [formError, setFormError] = useState('');
+    const [focused, setFocused] = useState<'name' | 'description' | null>(null);
 
-    const queryClient = useQueryClient();
+    const { mutate, isPending, error } = useCreateTrip();
 
-    const {mutate, isPending} = useMutation({
-        mutationFn: createTrip,
-        onSuccess: async (trip) => {
-            queryClient.invalidateQueries({queryKey: ['trips']})
-            router.replace('../trips');
-        },
-        onError: async (err) => {
-            if (err instanceof ApiError && err.status === 422) {
-                setError('Помилка 422');
-            } else if (err instanceof ApiError && err.status === 401) {
-                await signOut()
-            } else if (err instanceof ApiError) {
-                setError('Не вдалося створити подорож, спробуйте ще раз')
-            } else {
-                setError('Немає з’єднання з сервером')
-            }
-        }
-    })
+    const errorMessage = formError || getErrorMessage(error);
 
     const handleSubmit = () => {
         if (!name.trim()) {
-            setError('Вкажіть назву подорожі');
-            return
+            setFormError('Вкажіть назву подорожі');
+            return;
         }
 
-        setError('')
-        mutate(
-            {
-                name: name.trim(),
-                description: description.trim() || undefined,
-                startDate: startDate || undefined,
-                endDate: endDate || undefined,
-            })
-    }
-
-    if (isPending) {
-        return (
-            <View style={styles.center}>
-                <ActivityIndicator/>
-            </View>
-        );
-    }
-
-
-    if (error) {
-        return (
-            <View style={styles.center}>
-                <Text style={styles.muted}>Не вдалося завантажити подорожі</Text>
-            </View>
-        );
-    }
-
+        setFormError('');
+        mutate({
+            name: name.trim(),
+            description: description.trim() || undefined,
+            startDate: startDate || undefined,
+            endDate: endDate || undefined,
+        });
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -95,7 +60,7 @@ export default function NewTripScreen() {
                     autoCorrect={false}
                     autoComplete="name"
                     returnKeyType="next"
-                    editable={!isLoading}
+                    editable={!isPending}
                 />
             </View>
 
@@ -112,7 +77,7 @@ export default function NewTripScreen() {
                     autoCapitalize="none"
                     autoCorrect={false}
                     returnKeyType="next"
-                    editable={!isLoading}
+                    editable={!isPending}
                 />
             </View>
 
@@ -124,6 +89,8 @@ export default function NewTripScreen() {
                 onChange={setEndDate}
                 minimumDate={startDate || undefined}
             />
+
+            {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
 
             <Pressable
                 style={({pressed}) => [styles.primaryButton, pressed && {opacity: 0.85}]}

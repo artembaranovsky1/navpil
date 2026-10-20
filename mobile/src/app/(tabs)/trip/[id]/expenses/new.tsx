@@ -1,37 +1,30 @@
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable, ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View
+    ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View
 } from 'react-native';
 import {SafeAreaView} from "react-native-safe-area-context";
 import {colors} from "@/color";
-import {CATEGORY_LABELS, createExpense, EXPENSE_CATEGORIES, ExpenseCategory} from "@/api/expense";
+import {CATEGORY_LABELS, EXPENSE_CATEGORIES, ExpenseCategory} from "@/api/expense";
 import {DateField} from "@/components/date-field";
-import React, {useMemo, useState} from 'react';
-import RadioGroup from 'react-native-radio-buttons-group';
+import {useState} from 'react';
 import {router, useLocalSearchParams} from "expo-router";
-import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import {getTrip} from "@/api/trips";
 import {toApiDate} from "@/api/helper";
 import {ApiError} from "@/api/ApiError";
 import {Chip} from "@/components/chip";
-import {useMe} from "@/hooks/queries";
+import {useMe, useTrip} from "@/hooks/queries";
+import {useCreateExpense} from "@/hooks/mutations";
+
+const getErrorMessage = (error: unknown) => {
+    if (!error) return '';
+    if (error instanceof ApiError && error.status === 422) return 'Перевірте поля форми';
+    if (error instanceof ApiError) return 'Щось пішло не так, спробуйте ще раз';
+    return 'Немає з’єднання з сервером';
+}
 
 export default function NewExpenseScreen() {
     const {id: tripId} = useLocalSearchParams<{ id: string }>();
-    const queryClient = useQueryClient();
     const {data: me} = useMe()
 
-    const {data: trip, isLoading} = useQuery({
-        queryKey: ['trip', tripId],
-        queryFn: () => getTrip(tripId),
-        enabled: !!tripId
-    })
+    const {data: trip, isLoading: isTripLoading, error: tripError} = useTrip(tripId)
 
     const [amount, setAmount] = useState('');
     const [name, setName] = useState('');
@@ -41,25 +34,13 @@ export default function NewExpenseScreen() {
     const [paidById, setPaidById] = useState<string | null>(null);
     const [splitBetween, setSplitBetween] = useState<string[] | null>(null);
     const [focused, setFocused] = useState<'amount' | 'name' | 'description' | null>(null);
-    const [error, setError] = useState('');
+    const [formError, setFormError] = useState('');
 
 
-    const {mutate, isPending} = useMutation({
-        mutationFn: (data: Parameters<typeof createExpense>[1]) => createExpense(tripId, data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({queryKey: ['expenses', tripId]});
-            router.back()
-        },
-        onError: (err) => {
-            if (err instanceof ApiError && err.status === 422) {
-                setError('Перевірте поля форми');
-            } else {
-                setError('Не вдалося зберегти витрату');
-            }
-        }
-    })
+    const {mutate, isPending: isCreateExpensePending, error: createError} = useCreateExpense(tripId);
+    const errorMessage = formError || getErrorMessage(createError);
 
-    if (isLoading || !trip) {
+    if (isTripLoading) {
         return (
             <View style={styles.center}>
                 <ActivityIndicator/>
@@ -67,6 +48,13 @@ export default function NewExpenseScreen() {
         );
     }
 
+    if (tripError || !trip) {
+        return (
+            <View style={styles.center}>
+                <Text style={styles.muted}>Не вдалося завантажити подорож</Text>
+            </View>
+        );
+    }
     const payer = paidById ?? me?.id ?? trip.members[0]?.id
     const split = splitBetween ?? trip.members.map(member => member.id);
 
@@ -82,11 +70,11 @@ export default function NewExpenseScreen() {
     };
 
     const handleSubmit = () => {
-        if (!(amountNumber > 0)) return setError('Вкажіть суму');
-        if (!name.trim()) return setError('Вкажіть, за що');
-        if (split.length === 0) return setError('Оберіть, між ким ділити');
+        if (!(amountNumber > 0)) return setFormError('Вкажіть суму');
+        if (!name.trim()) return setFormError('Вкажіть, за що');
+        if (split.length === 0) return setFormError('Оберіть, між ким ділити');
 
-        setError('')
+        setFormError('')
         mutate({
             name: name.trim(),
             amount: amountNumber,
@@ -95,12 +83,23 @@ export default function NewExpenseScreen() {
             date,
             paidById: payer,
             splitBetween: split
+        }, {
+            onSuccess: () => {
+                setAmount('')
+                setName('')
+                setDescription('')
+                setDate(toApiDate(new Date()))
+                setCategory('food')
+                setPaidById(null)
+                setSplitBetween(null)
+                router.push(`/trip/${tripId}`)
+            }
         })
     }
 
     return (
         <SafeAreaView style={styles.container}>
-            <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+            <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
                 <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
                     <Text style={styles.title}>Нова витрата</Text>
 
@@ -115,7 +114,7 @@ export default function NewExpenseScreen() {
                             placeholder="0"
                             placeholderTextColor={colors.muted}
                             keyboardType="decimal-pad"
-                            editable={!isPending}
+                            editable={!isCreateExpensePending}
                         />
                     </View>
 
@@ -130,11 +129,11 @@ export default function NewExpenseScreen() {
                             placeholder="Вечеря в колибі"
                             placeholderTextColor={colors.muted}
                             autoCapitalize="sentences"
-                            editable={!isPending}
+                            editable={!isCreateExpensePending}
                         />
                     </View>
 
-                    <DateField label="Дата" value={date} onChange={setDate} disabled={isPending} />
+                    <DateField label="Дата" value={date} onChange={setDate} disabled={isCreateExpensePending}/>
 
                     <View style={styles.field}>
                         <Text style={styles.label}>Опис</Text>
@@ -147,7 +146,7 @@ export default function NewExpenseScreen() {
                             placeholder="Борщ, сало, ..."
                             placeholderTextColor={colors.muted}
                             autoCapitalize="sentences"
-                            editable={!isPending}
+                            editable={!isCreateExpensePending}
                         />
                     </View>
 
@@ -190,7 +189,7 @@ export default function NewExpenseScreen() {
                                     <View style={[styles.checkbox, isIn && styles.checkboxOn]}>
                                         {isIn ? <Text style={styles.checkmark}>✓</Text> : null}
                                     </View>
-                                    <Text style={[styles.memberName, !isIn && { color: colors.muted }]}>{m.name}</Text>
+                                    <Text style={[styles.memberName, !isIn && {color: colors.muted}]}>{m.name}</Text>
                                     <Text style={styles.memberShare}>
                                         {isIn ? Math.round(share).toLocaleString('uk-UA') : '—'}
                                     </Text>
@@ -199,17 +198,17 @@ export default function NewExpenseScreen() {
                         })}
                     </View>
 
-                    {error ? <Text style={styles.error}>{error}</Text> : null}
+                    {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
                 </ScrollView>
 
                 <View style={styles.footer}>
                     <Pressable
                         onPress={handleSubmit}
-                        disabled={isPending}
-                        style={({ pressed }) => [styles.primaryButton, (pressed || isPending) && { opacity: 0.7 }]}
+                        disabled={isCreateExpensePending}
+                        style={({pressed}) => [styles.primaryButton, (pressed || isCreateExpensePending) && {opacity: 0.7}]}
                     >
                         <Text style={styles.primaryButtonText}>
-                            {isPending ? 'Зберігаємо…' : 'Зберегти витрату'}
+                            {isCreateExpensePending ? 'Зберігаємо…' : 'Зберегти витрату'}
                         </Text>
                     </Pressable>
                 </View>
@@ -352,4 +351,5 @@ const styles = StyleSheet.create({
             '500'
     }
     ,
+    muted: {fontSize: 14, color: '#6B6B66'},
 });

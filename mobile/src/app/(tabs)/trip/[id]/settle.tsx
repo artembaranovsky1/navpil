@@ -1,18 +1,17 @@
 import {ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {router, useLocalSearchParams} from "expo-router";
-import {useQuery, useQueryClient} from "@tanstack/react-query";
-import {getTrip, TripMember, TripResponse} from "@/api/trips";
-import {ApiError} from "@/api/ApiError";
-import {ExpenseResponse, getExpenses} from "@/api/expense";
-import {useEffect, useState} from "react";
+import {useQueryClient} from "@tanstack/react-query";
+import {TripResponse} from "@/api/trips";
+import {ExpenseResponse} from "@/api/expense";
+import {useState} from "react";
 import {useAuth} from "@/context/auth";
 import {colors} from "@/color";
 import {SafeAreaView} from "react-native-safe-area-context";
 import {calculateSettlement, getMemberName, Transfer} from "@/utils/settle";
 import {formatMoney, formatSignedMoney, formatTripDates} from "@/context/format";
-import { createPayment, getPayments, PaymentResponse } from '@/api/payments';
-import { DimensionValue } from 'react-native';
-import {useMe} from "@/hooks/queries";
+import {createPayment, getPayments, PaymentResponse} from '@/api/payments';
+import {DimensionValue} from 'react-native';
+import {useExpenses, useMe, usePayments, useTrip} from "@/hooks/queries";
 
 type SettlementProps = {
     trip: TripResponse;
@@ -25,46 +24,21 @@ const transferKey = (transfer: Transfer): string => `${transfer.fromId}->${trans
 
 export default function SettleScreen() {
     const {signOut} = useAuth();
-    const { id: tripId } = useLocalSearchParams<{ id: string }>();
-    const { data: me } = useMe();
+    const {id: tripId} = useLocalSearchParams<{ id: string }>();
+    const {data: me} = useMe();
+    const {data: trip, isLoading: isTripLoading, error: tripError} = useTrip(tripId);
+    const {data: expenses = [], isLoading: isExpensesLoading, error: expensesError} = useExpenses(tripId);
+    const {data: payments = [], isLoading: isPaymentsLoading, error: paymentsError} = usePayments(tripId);
 
-    const {data: trip, isLoading, error} = useQuery({
-        queryKey: ['trip', tripId],
-        queryFn: () => getTrip(tripId),
-        enabled: !!tripId,
-        retry: (count, err) => !(err instanceof ApiError && err.status === 401) && count < 2,
-    })
-
-    const {data: expenses = [], isLoading: isExpensesLoading, error: expensesError} = useQuery({
-        queryKey: ['expenses', tripId],
-        queryFn: () => getExpenses(tripId),
-        enabled: !!tripId,
-        retry: (count, err) => !(err instanceof ApiError && err.status === 401) && count < 2,
-    })
-
-    const {data: payments = [], isLoading: isPaymentsLoading, error: paymentsError} = useQuery({
-        queryKey: ['payments', tripId],
-        queryFn: () => getPayments(tripId),
-        enabled: !!tripId,
-        retry: (count, err) => !(err instanceof ApiError && err.status === 401) && count < 2,
-    })
-
-    useEffect(() => {
-        const err = error ?? expensesError ?? paymentsError;
-        if (err instanceof ApiError && err.status === 401) {   // err, а не error
-            signOut();
-        }
-    }, [error, expensesError, paymentsError]);
-
-    if (isLoading || isExpensesLoading || isPaymentsLoading) {
+    if (isTripLoading || isExpensesLoading || isPaymentsLoading) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator />
+                <ActivityIndicator/>
             </View>
         );
     }
 
-    if (error || expensesError || paymentsError || !trip) {
+    if (tripError || expensesError || paymentsError || !trip) {
         return (
             <View style={styles.center}>
                 <Text style={styles.muted}>Не вдалося завантажити подорож</Text>
@@ -73,14 +47,11 @@ export default function SettleScreen() {
     }
 
     const dates = formatTripDates(trip?.startDate, trip?.endDate);
-
-
-
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <ScrollView contentContainerStyle={styles.content}>
-                <TripHeader trip={trip} dates={dates} active="settle" />
-                <Settlement trip={trip} expenses={expenses} payments={payments} currentUserId={me?.id} />
+                <TripHeader trip={trip} dates={dates} active="settle"/>
+                <Settlement trip={trip} expenses={expenses} payments={payments} currentUserId={me?.id}/>
             </ScrollView>
         </SafeAreaView>
     );
@@ -94,11 +65,11 @@ type TripHeaderProps = {
     active: 'expenses' | 'settle' | 'members';
 };
 
-function TripHeader({ trip, dates, active }: TripHeaderProps) {
+function TripHeader({trip, dates, active}: TripHeaderProps) {
     const tabs = [
-        { key: 'expenses', label: 'Витрати', href: `/trip/${trip.id}` },
-        { key: 'settle', label: 'Розрахунок', href: `/trip/${trip.id}/settle` },
-        { key: 'members', label: `Учасники · ${trip.members.length}`, href: `/trip/${trip.id}/members` },
+        {key: 'expenses', label: 'Витрати', href: `/trip/${trip.id}`},
+        {key: 'settle', label: 'Розрахунок', href: `/trip/${trip.id}/settle`},
+        {key: 'members', label: `Учасники · ${trip.members.length}`, href: `/trip/${trip.id}/members`},
     ] as const;
 
     return (
@@ -114,7 +85,7 @@ function TripHeader({ trip, dates, active }: TripHeaderProps) {
 
             <Pressable
                 onPress={() => router.push(`/trip/${trip.id}/expenses/new`)}
-                style={({ pressed }) => [styles.addButton, pressed && { opacity: 0.85 }]}
+                style={({pressed}) => [styles.addButton, pressed && {opacity: 0.85}]}
             >
                 {/*<PlusIcon size={16} />*/}
                 <Text style={styles.addButtonText}>Додати витрату</Text>
@@ -147,7 +118,7 @@ function Settlement({trip, expenses, payments, currentUserId}: SettlementProps) 
     const [payingKey, setPayingKey] = useState<string>();
     const [actionError, setActionError] = useState<string>('');
 
-    const { balances, remaining, transfers, naiveTransfersCount } = calculateSettlement(trip.members, expenses, payments);
+    const {balances, remaining, transfers, naiveTransfersCount} = calculateSettlement(trip.members, expenses, payments);
     const name = (userId: string) => getMemberName(trip.members, userId);
 
     const myRemaining = currentUserId ? remaining[currentUserId] ?? 0 : 0;
@@ -169,7 +140,7 @@ function Settlement({trip, expenses, payments, currentUserId}: SettlementProps) 
 
         try {
             await createPayment(trip.id, transfer);
-            queryClient.invalidateQueries({ queryKey: ['payments', trip.id] });
+            queryClient.invalidateQueries({queryKey: ['payments', trip.id]});
         } catch {
             setActionError('Не вдалося позначити переказ, спробуйте ще раз');
         } finally {
@@ -202,7 +173,7 @@ function Settlement({trip, expenses, payments, currentUserId}: SettlementProps) 
                     <Text style={styles.cardLabel}>Оплачено</Text>
                     <Text style={styles.statLight}>{payments.length} з {totalTransfers}</Text>
                     <View style={styles.progressTrack}>
-                        <View style={[styles.progressFill, { width: progress }]} />
+                        <View style={[styles.progressFill, {width: progress}]}/>
                     </View>
                 </View>
             </View>
@@ -221,7 +192,7 @@ function Settlement({trip, expenses, payments, currentUserId}: SettlementProps) 
                         const key = transferKey(transfer);
                         return (
                             <View key={key} style={styles.transfer}>
-                                <View style={{ flex: 1 }}>
+                                <View style={{flex: 1}}>
                                     <Text style={styles.transferWho}>
                                         {name(transfer.fromId)} → {name(transfer.toId)}
                                     </Text>
@@ -230,9 +201,9 @@ function Settlement({trip, expenses, payments, currentUserId}: SettlementProps) 
                                 <Pressable
                                     onPress={() => handlePaid(transfer)}
                                     disabled={payingKey !== undefined}
-                                    style={({ pressed }) => [
+                                    style={({pressed}) => [
                                         styles.paidButton,
-                                        (pressed || payingKey !== undefined) && { opacity: 0.6 },
+                                        (pressed || payingKey !== undefined) && {opacity: 0.6},
                                     ]}
                                 >
                                     <Text style={styles.paidButtonText}>
@@ -268,10 +239,10 @@ function Settlement({trip, expenses, payments, currentUserId}: SettlementProps) 
 
                             <View style={styles.barTrack}>
                                 <View style={[styles.barHalf, styles.barHalfNegative]}>
-                                    {b.balance < 0 ? <View style={[styles.bar, styles.barNegative, { width }]} /> : null}
+                                    {b.balance < 0 ? <View style={[styles.bar, styles.barNegative, {width}]}/> : null}
                                 </View>
                                 <View style={styles.barHalf}>
-                                    {b.balance > 0 ? <View style={[styles.bar, styles.barPositive, { width }]} /> : null}
+                                    {b.balance > 0 ? <View style={[styles.bar, styles.barPositive, {width}]}/> : null}
                                 </View>
                             </View>
 
@@ -322,90 +293,90 @@ function Settlement({trip, expenses, payments, currentUserId}: SettlementProps) 
 // ================= СТИЛІ =================
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
-    content: { padding: 20, gap: 20 },
-    muted: { fontSize: 13, color: colors.muted },
-    error: { color: colors.error, fontSize: 14, marginTop: 8 },
-    positive: { color: colors.accent },
-    strong: { fontWeight: '600' },
+    container: {flex: 1, backgroundColor: colors.background},
+    center: {flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background},
+    content: {padding: 20, gap: 20},
+    muted: {fontSize: 13, color: colors.muted},
+    error: {color: colors.error, fontSize: 14, marginTop: 8},
+    positive: {color: colors.accent},
+    strong: {fontWeight: '600'},
 
     // шапка
-    header: { gap: 12 },
-    breadcrumbs: { fontSize: 14, color: colors.muted },
-    title: { fontSize: 30, fontWeight: '600', color: colors.text, letterSpacing: -0.5 },
+    header: {gap: 12},
+    breadcrumbs: {fontSize: 14, color: colors.muted},
+    title: {fontSize: 30, fontWeight: '600', color: colors.text, letterSpacing: -0.5},
     addButton: {
         height: 48, borderRadius: 24, backgroundColor: colors.text,
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     },
-    addButtonText: { color: colors.surface, fontSize: 15, fontWeight: '500' },
-    tabs: { gap: 8 },
+    addButtonText: {color: colors.surface, fontSize: 15, fontWeight: '500'},
+    tabs: {gap: 8},
     tab: {
         height: 36, paddingHorizontal: 14, borderRadius: 18,
         borderWidth: 1, borderColor: colors.border, justifyContent: 'center',
     },
-    tabActive: { backgroundColor: colors.text, borderColor: colors.text },
-    tabText: { fontSize: 14, color: colors.text },
-    tabTextActive: { color: colors.surface },
+    tabActive: {backgroundColor: colors.text, borderColor: colors.text},
+    tabText: {fontSize: 14, color: colors.text},
+    tabTextActive: {color: colors.surface},
 
     // загальні картки
-    settlement: { gap: 16 },
+    settlement: {gap: 16},
     card: {
         backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
         borderRadius: 18, padding: 16, gap: 10,
     },
-    cardLabel: { fontSize: 13, color: colors.muted },
-    panelHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-    panelTitle: { fontSize: 18, fontWeight: '600', color: colors.text },
+    cardLabel: {fontSize: 13, color: colors.muted},
+    panelHeader: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline'},
+    panelTitle: {fontSize: 18, fontWeight: '600', color: colors.text},
 
     // підсумки
-    statsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-    statCardWide: { width: '100%' },
-    statCard: { flex: 1, minWidth: 140 },
-    stat: { fontSize: 28, fontWeight: '700', color: colors.text },
-    statLight: { fontSize: 22, fontWeight: '500', color: colors.text },
-    statNote: { fontSize: 13, fontWeight: '400', color: colors.muted },
-    progressTrack: { height: 6, borderRadius: 3, backgroundColor: colors.border, overflow: 'hidden' },
-    progressFill: { height: '100%', backgroundColor: colors.accent },
+    statsRow: {flexDirection: 'row', flexWrap: 'wrap', gap: 10},
+    statCardWide: {width: '100%'},
+    statCard: {flex: 1, minWidth: 140},
+    stat: {fontSize: 28, fontWeight: '700', color: colors.text},
+    statLight: {fontSize: 22, fontWeight: '500', color: colors.text},
+    statNote: {fontSize: 13, fontWeight: '400', color: colors.muted},
+    progressTrack: {height: 6, borderRadius: 3, backgroundColor: colors.border, overflow: 'hidden'},
+    progressFill: {height: '100%', backgroundColor: colors.accent},
 
     // перекази
     transfer: {
         flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12,
         borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border,
     },
-    transferWho: { fontSize: 15, color: colors.text },
-    transferAmount: { fontSize: 17, fontWeight: '600', color: colors.text, marginTop: 2 },
+    transferWho: {fontSize: 15, color: colors.text},
+    transferAmount: {fontSize: 17, fontWeight: '600', color: colors.text, marginTop: 2},
     paidButton: {
         height: 36, paddingHorizontal: 14, borderRadius: 18,
         borderWidth: 1, borderColor: colors.text, justifyContent: 'center',
     },
-    paidButtonText: { fontSize: 14, fontWeight: '500', color: colors.text },
+    paidButtonText: {fontSize: 14, fontWeight: '500', color: colors.text},
 
     // баланси
-    axis: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 80 },
-    axisText: { fontSize: 12, color: colors.muted },
-    barRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    barName: { width: 72, fontSize: 14, color: colors.text },
-    barTrack: { flex: 1, flexDirection: 'row', height: 14 },
-    barHalf: { flex: 1, justifyContent: 'center' },
+    axis: {flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 80},
+    axisText: {fontSize: 12, color: colors.muted},
+    barRow: {flexDirection: 'row', alignItems: 'center', gap: 8},
+    barName: {width: 72, fontSize: 14, color: colors.text},
+    barTrack: {flex: 1, flexDirection: 'row', height: 14},
+    barHalf: {flex: 1, justifyContent: 'center'},
     barHalfNegative: {
         alignItems: 'flex-end',   // червона смужка росте від центру вліво
         borderRightWidth: 1, borderRightColor: colors.border,
     },
-    bar: { height: 10, borderRadius: 5 },
-    barNegative: { backgroundColor: colors.error },
-    barPositive: { backgroundColor: colors.accent },
-    barValue: { width: 72, textAlign: 'right', fontSize: 14, color: colors.text },
+    bar: {height: 10, borderRadius: 5},
+    barNegative: {backgroundColor: colors.error},
+    barPositive: {backgroundColor: colors.accent},
+    barValue: {width: 72, textAlign: 'right', fontSize: 14, color: colors.text},
 
     // таблиця
     tableRow: {
         flexDirection: 'row', alignItems: 'center', paddingVertical: 10,
         borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border,
     },
-    tableHead: { borderTopWidth: 0, paddingVertical: 6 },
-    tableTotal: { borderTopWidth: 1, borderTopColor: colors.text },
-    headText: { fontSize: 12, color: colors.muted },
-    cellName: { flex: 1.4, fontSize: 14, color: colors.text },
-    cell: { flex: 1, fontSize: 14, color: colors.text, textAlign: 'right' },
-    mutedCell: { color: colors.muted },
+    tableHead: {borderTopWidth: 0, paddingVertical: 6},
+    tableTotal: {borderTopWidth: 1, borderTopColor: colors.text},
+    headText: {fontSize: 12, color: colors.muted},
+    cellName: {flex: 1.4, fontSize: 14, color: colors.text},
+    cell: {flex: 1, fontSize: 14, color: colors.text, textAlign: 'right'},
+    mutedCell: {color: colors.muted},
 });
