@@ -1,30 +1,24 @@
 import './Menu.scss'
-import {useEffect, useState} from "react";
-import {Link, NavLink, useLocation} from "react-router";
-import {flattenTrips, getTrips, type TripResponse} from "../../api/trips.ts";
+import {Link, NavLink} from "react-router";
+import {flattenTrips} from "../../api/trips.ts";
+import {useTrips} from "../../hooks/queries.ts";
 import {MenuUser} from "./component/MenuUser.tsx";
 import {Skeleton} from "../../components/Skeleton/Skeleton.tsx";
 
 const navLinkClass = ({isActive}: { isActive: boolean }) =>
-    isActive ? 'trip-menu__link' : 'trip-menu__link-disable'
+    isActive ? 'trip-menu__link trip-menu__link--active' : 'trip-menu__link'
+
+const travelLinkClass = ({isActive}: { isActive: boolean }) =>
+    isActive ? 'trip-menu__travel trip-menu__travel--active text-h15' : 'trip-menu__travel text-h15'
 
 export const Menu = () => {
-    const [trips, setTrips] = useState<TripResponse[]>([])
-    const [isLoading, setIsLoading] = useState<boolean>(true)
-    const {pathname} = useLocation()
-
-    useEffect(() => {
-        getTrips()
-            .then((data) => setTrips(flattenTrips(data)))
-            .catch(() => setTrips([]))
-            .finally(() => setIsLoading(false))
-    }, [pathname]);
-
-    console.log(trips)
+    // список оновлюється сам: мутації інвалідовують кеш подорожей
+    const {data, isPending} = useTrips()
+    const trips = data ? flattenTrips(data) : []
 
     return (
         <div className='trip-menu'>
-            <div className='trip-menu__logo'></div>
+            <Link to='/trips' className='trip-menu__logo' aria-label='Мої подорожі'/>
             <div className='trip-menu__nav'>
                 <NavLink to='/trips' end className={navLinkClass}>
                     <div className='trip-menu__link-logo-1'></div>
@@ -37,16 +31,17 @@ export const Menu = () => {
             </div>
             <div className='trip-menu__travels'>
                 <div className='trip-menu__travel-name text-caption'>Подорожі</div>
-                <div className='trip-menu__travel-list'></div>
-                {/* заглушки лише при першому завантаженні — далі список оновлюється без блимання */}
-                {isLoading && trips.length === 0 && [80, 60, 70].map((width) => (
-                    <Skeleton key={width} className='trip-menu__travel-skeleton' width={`${width}%`} height={16}/>
-                ))}
-                {trips.map((item) => (
-                    <Link key={item.id} to={`/trips/${item.id}`} className='trip-menu__travel text-h15'>
-                        {item.name} {item.inviteCode}
-                    </Link>
-                ))}
+                <div className='trip-menu__travel-list'>
+                    {/* заглушки лише при першому завантаженні — далі список оновлюється без блимання */}
+                    {isPending && [80, 60, 70].map((width) => (
+                        <Skeleton key={width} className='trip-menu__travel-skeleton' width={`${width}%`} height={16}/>
+                    ))}
+                    {trips.map((item) => (
+                        <NavLink key={item.id} to={`/trips/${item.id}`} className={travelLinkClass}>
+                            {item.name}
+                        </NavLink>
+                    ))}
+                </div>
             </div>
             <MenuUser/>
         </div>

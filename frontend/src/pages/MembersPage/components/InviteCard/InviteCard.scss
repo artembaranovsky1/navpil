@@ -26,24 +26,8 @@
   letter-spacing: 6px;
 }
 
-.invite-card__link {
-  margin-top: 16px;
-  padding: 0 14px;
-  height: 44px;
-  border-radius: 12px;
-  background: #1C1C1B;
-  border: 1px solid #2A2A28;
-  font-size: 13px;
-  color: #B5B5AF;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
 .invite-card__buttons {
-  margin-top: 14px;
+  margin-top: 16px;
   display: flex;
   gap: 10px;
 }

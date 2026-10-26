@@ -55,12 +55,71 @@
 
 .register-page__right-diagrama {
   width: 420px;
-  height: 110px;
   background-color: #1C1C1B;
   padding: 22px;
   border-radius: 22px;
-
   margin-top: 48px;
+}
+
+.register-page__diagrama-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: $disabled-text;
+}
+
+.register-page__diagrama-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+
+  font-size: 14px;
+}
+
+.register-page__diagrama-name {
+  width: 52px;
+  color: #FFFFFF;
+}
+
+.register-page__diagrama-track {
+  flex: 1;
+  display: flex;
+  height: 14px;
+}
+
+.register-page__diagrama-half {
+  flex: 1;
+}
+
+.register-page__diagrama-half--negative {
+  display: flex;
+  justify-content: flex-end;
+  border-right: 1px solid #555551;
+}
+
+.register-page__diagrama-bar {
+  height: 14px;
+}
+
+.register-page__diagrama-bar--positive {
+  background: #4FC79A;
+  border-radius: 0 4px 4px 0;
+}
+
+.register-page__diagrama-bar--negative {
+  background: #FFFFFF;
+  border-radius: 4px 0 0 4px;
+}
+
+.register-page__diagrama-amount {
+  width: 52px;
+  text-align: right;
+  color: #FFFFFF;
+}
+
+.register-page__diagrama-amount--positive {
+  color: #4FC79A;
 }
 
 .register-page__right-add-text {

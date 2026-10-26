@@ -3,13 +3,10 @@ import './NewTripPage.scss';
 import {useState} from "react";
 import {Link, useNavigate} from "react-router";
 import {Button} from "../../components/Button/Button.tsx";
-import {createTrip} from "../../api/trips.ts";
+import {useCreateTrip} from "../../hooks/mutations.ts";
 import {ApiError} from "../../api/ApiError.ts";
-
-type FieldErrors = Record<string, string[]>;
-
-// як у валідації на бекенді
-const DESCRIPTION_MAX = 500;
+import type {FieldErrors} from "../../utils/expenseValidation.ts";
+import {TRIP_DESCRIPTION_MAX, TRIP_NAME_MAX, validateTrip} from "../../utils/tripValidation.ts";
 
 export const NewTripPage = () => {
     const [name, setName] = useState('');
@@ -18,18 +15,21 @@ export const NewTripPage = () => {
     const [endDate, setEndDate] = useState('');
     const [error, setError] = useState('');
     const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-    const [isLoading, setIsLoading] = useState(false);
+    const createTrip = useCreateTrip();
+    const isLoading = createTrip.isPending;
 
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
         e.preventDefault();
         setError('');
-        setFieldErrors({});
-        setIsLoading(true);
+
+        const errors = validateTrip({name, description, startDate, endDate});
+        setFieldErrors(errors);
+        if (Object.keys(errors).length > 0) return;
 
         try {
-            await createTrip({
+            await createTrip.mutateAsync({
                 name: name.trim(),
                 description: description.trim() || undefined,
                 startDate: startDate || undefined,
@@ -41,16 +41,23 @@ export const NewTripPage = () => {
             if (err instanceof ApiError && err.status === 422) {
                 setFieldErrors((err.details ?? {}) as FieldErrors);
             } else if (err instanceof ApiError && err.status === 401) {
-                localStorage.removeItem('token');
-                navigate('/login', {replace: true});
+                // редірект на /login робить ProtectedRoutes
             } else if (err instanceof ApiError) {
                 setError('Не вдалося створити подорож, спробуйте ще раз');
             } else {
                 setError('Немає з’єднання з сервером');
             }
-        } finally {
-            setIsLoading(false);
         }
+    };
+
+    // прибираємо помилку поля, щойно юзер його змінив
+    const clearFieldError = (...fields: string[]) => {
+        setFieldErrors((prev) => {
+            if (!fields.some((field) => prev[field])) return prev;
+            const next = {...prev};
+            fields.forEach((field) => delete next[field]);
+            return next;
+        });
     };
 
     const inputClass = (field: string, extra = '') =>
@@ -82,7 +89,7 @@ export const NewTripPage = () => {
                     Після створення отримаєш код, щоб запросити друзів і разом вести витрати.
                 </p>
 
-                <form className="new-trip__form" onSubmit={handleSubmit}>
+                <form className="new-trip__form" onSubmit={handleSubmit} noValidate>
                     <div className="new-trip__field">
                         <label className="new-trip__label" htmlFor="new-trip-name">Назва</label>
                         <input
@@ -91,8 +98,12 @@ export const NewTripPage = () => {
                             type="text"
                             autoComplete="off"
                             placeholder="Наприклад, Карпати"
+                            maxLength={TRIP_NAME_MAX}
                             value={name}
-                            onChange={(event) => setName(event.target.value)}
+                            onChange={(event) => {
+                                setName(event.target.value);
+                                clearFieldError('name');
+                            }}
                             disabled={isLoading}
                             aria-invalid={Boolean(fieldErrors.name)}
                             aria-describedby={fieldErrors.name ? 'new-trip-name-error' : undefined}
@@ -110,15 +121,18 @@ export const NewTripPage = () => {
                             id="new-trip-description"
                             className={inputClass('description', 'new-trip__textarea')}
                             rows={3}
-                            maxLength={DESCRIPTION_MAX}
+                            maxLength={TRIP_DESCRIPTION_MAX}
                             placeholder="Куди їдемо і з ким"
                             value={description}
-                            onChange={(event) => setDescription(event.target.value)}
+                            onChange={(event) => {
+                                setDescription(event.target.value);
+                                clearFieldError('description');
+                            }}
                             disabled={isLoading}
                             aria-invalid={Boolean(fieldErrors.description)}
                             aria-describedby={fieldErrors.description ? 'new-trip-description-error' : undefined}
                         />
-                        <div className="new-trip__counter">{description.length}/{DESCRIPTION_MAX}</div>
+                        <div className="new-trip__counter">{description.length}/{TRIP_DESCRIPTION_MAX}</div>
                         {fieldError('description')}
                     </div>
 
@@ -130,7 +144,10 @@ export const NewTripPage = () => {
                                 className={inputClass('startDate')}
                                 type="date"
                                 value={startDate}
-                                onChange={(event) => setStartDate(event.target.value)}
+                                onChange={(event) => {
+                                    setStartDate(event.target.value);
+                                    clearFieldError('startDate', 'endDate');
+                                }}
                                 disabled={isLoading}
                                 aria-invalid={Boolean(fieldErrors.startDate)}
                                 aria-describedby={fieldErrors.startDate ? 'new-trip-startDate-error' : undefined}
@@ -145,7 +162,10 @@ export const NewTripPage = () => {
                                 type="date"
                                 min={startDate || undefined}
                                 value={endDate}
-                                onChange={(event) => setEndDate(event.target.value)}
+                                onChange={(event) => {
+                                    setEndDate(event.target.value);
+                                    clearFieldError('endDate');
+                                }}
                                 disabled={isLoading}
                                 aria-invalid={Boolean(fieldErrors.endDate)}
                                 aria-describedby={fieldErrors.endDate ? 'new-trip-endDate-error' : undefined}

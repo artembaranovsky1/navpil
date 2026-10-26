@@ -1,4 +1,5 @@
 import {ApiError} from "./ApiError.ts";
+import {authFetch} from "./authFetch.ts";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -11,7 +12,7 @@ export type User = {
 export const getMe = async (): Promise<User> => {
     const token = localStorage.getItem('token');
 
-    const response = await fetch(`${API_URL}/users/me`, {
+    const response = await authFetch(`${API_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -26,7 +27,7 @@ export const getMe = async (): Promise<User> => {
 export const getUser = async (userId: string): Promise<User> => {
     const token = localStorage.getItem('token');
 
-    const response = await fetch(`${API_URL}/users/${userId}`, {
+    const response = await authFetch(`${API_URL}/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
     })
 

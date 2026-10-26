@@ -1,7 +1,7 @@
 import '../../components/Input/Input.scss';
 import './JoinTripPage.scss';
 import {useState} from "react";
-import {joinTrip} from "../../api/trips.ts";
+import {useJoinTrip} from "../../hooks/mutations.ts";
 import {ApiError} from "../../api/ApiError.ts";
 import {Button} from "../../components/Button/Button.tsx";
 import {Link, useNavigate, useSearchParams} from "react-router";
@@ -17,16 +17,16 @@ export const JoinTripPage = () => {
     // посилання-запрошення: /join?code=KRP482
     const [code, setCode] = useState(normalizeCode(searchParams.get('code') ?? ''));
     const [error, setError] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const joinTrip = useJoinTrip();
+    const isLoading = joinTrip.isPending;
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError('');
-        setIsLoading(true);
 
         try {
-            const trip = await joinTrip(code);
+            const trip = await joinTrip.mutateAsync(code);
             navigate(`/trips/${trip.id}`, { replace: true });
         } catch (err) {
             if (err instanceof ApiError && err.status === 404) {
@@ -34,13 +34,10 @@ export const JoinTripPage = () => {
             } else if (err instanceof ApiError && err.status === 422) {
                 setError('Код має містити 6 символів');
             } else if (err instanceof ApiError && err.status === 401) {
-                localStorage.removeItem('token');
-                navigate('/login', { replace: true });
+                // редірект на /login робить ProtectedRoutes
             } else {
                 setError('Немає з’єднання з сервером');
             }
-        } finally {
-            setIsLoading(false);
         }
     };
 

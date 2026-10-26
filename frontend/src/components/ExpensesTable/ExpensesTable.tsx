@@ -1,6 +1,6 @@
 import "./ExpensesTable.scss";
 import {useState} from "react";
-import {Link} from "react-router";
+import {Link, useNavigate} from "react-router";
 import type {ExpenseResponse} from "../../api/expense.ts";
 import {CategoryIcon} from "../CategoryIcon/CategoryIcon.tsx";
 import type {TripMember} from "../../api/trips.ts";
@@ -40,6 +40,17 @@ const getSplitLabel = (members: TripMember[], splitBetween: string[]): string =>
 export const ExpensesTable = ({tripId, expenses, members, currentUserId, onSelect}: ExpensesTableProps) => {
     const [search, setSearch] = useState<string>('');
     const [filter, setFilter] = useState<Filter>('all');
+    const navigate = useNavigate();
+
+    // клік по будь-якому місцю рядка відкриває деталі витрати
+    const openExpense = (event: React.MouseEvent, expense: ExpenseResponse) => {
+        if (onSelect) {
+            onSelect(expense);
+        } else if (!(event.target as HTMLElement).closest('a')) {
+            // по посиланню з назвою перехід уже робить сам Link
+            navigate(`/trips/${tripId}/expenses/${expense.id}`);
+        }
+    };
 
     const query = search.trim().toLowerCase();
     const visibleExpenses = expenses.filter((expense) =>
@@ -93,13 +104,16 @@ export const ExpensesTable = ({tripId, expenses, members, currentUserId, onSelec
                     </thead>
                     <tbody>
                         {visibleExpenses.map((expense) => (
-                            <tr key={expense.id}>
+                            <tr
+                                key={expense.id}
+                                className="expenses-table__row"
+                                onClick={(event) => openExpense(event, expense)}
+                            >
                                 <td>
                                     {onSelect ? (
                                         <button
                                             type="button"
                                             className="expenses-table__name expenses-table__name--button"
-                                            onClick={() => onSelect(expense)}
                                         >
                                             <CategoryIcon category={expense.category}/>
                                             <span>{expense.name}</span>

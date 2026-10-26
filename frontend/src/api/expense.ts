@@ -1,4 +1,5 @@
 import {ApiError} from "./ApiError.ts";
+import {authFetch} from "./authFetch.ts";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -56,10 +57,11 @@ export type UpdateExpenseData = {
     splitBetween?: string[];
 };
 
+
 export const getExpenses = async (tripId: string): Promise<ExpenseResponse[]> => {
     const token = localStorage.getItem('token');
 
-    const response = await fetch(`${API_URL}/rooms/${tripId}/items`, {
+    const response = await authFetch(`${API_URL}/rooms/${tripId}/items`, {
         headers: {Authorization: `Bearer ${token}`},
     })
 
@@ -72,10 +74,11 @@ export const getExpenses = async (tripId: string): Promise<ExpenseResponse[]> =>
     return data;
 }
 
+
 export const createExpense = async (tripId: string, expenseData: CreateExpenseData): Promise<ExpenseResponse> => {
     const token = localStorage.getItem('token');
 
-    const response = await fetch(`${API_URL}/rooms/${tripId}/items`, {
+    const response = await authFetch(`${API_URL}/rooms/${tripId}/items`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -100,7 +103,7 @@ export const updateExpense = async (
 ): Promise<ExpenseResponse> => {
     const token = localStorage.getItem('token');
 
-    const response = await fetch(`${API_URL}/rooms/${tripId}/items/${expenseId}`, {
+    const response = await authFetch(`${API_URL}/rooms/${tripId}/items/${expenseId}`, {
         method: 'PATCH',
         headers: {'Content-Type': 'application/json', Authorization: `Bearer ${token}`},
         body: JSON.stringify(changes),
@@ -118,7 +121,7 @@ export const updateExpense = async (
 export const deleteExpense = async (tripId: string, expenseId: string): Promise<void> => {
     const token = localStorage.getItem('token');
 
-    const response = await fetch(`${API_URL}/rooms/${tripId}/items/${expenseId}`, {
+    const response = await authFetch(`${API_URL}/rooms/${tripId}/items/${expenseId}`, {
         method: 'DELETE',
         headers: {Authorization: `Bearer ${token}`},
     })

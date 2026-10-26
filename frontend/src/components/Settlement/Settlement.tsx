@@ -1,7 +1,8 @@
 import "./Settlement.scss";
 import {useState} from "react";
 import type {ExpenseResponse} from "../../api/expense.ts";
-import {createPayment, type PaymentResponse} from "../../api/payments.ts";
+import type {PaymentResponse} from "../../api/payments.ts";
+import {useCreatePayment} from "../../hooks/mutations.ts";
 import type {TripResponse} from "../../api/trips.ts";
 import {calculateSettlement, getMemberName, type Transfer} from "../../utils/settle.ts";
 import {formatMoney, formatSignedMoney} from "../../utils/format.ts";
@@ -11,13 +12,15 @@ type SettlementProps = {
     expenses: ExpenseResponse[];
     payments: PaymentResponse[];
     currentUserId?: string;
-    onPaymentCreated: (payment: PaymentResponse) => void;
 }
 
 const transferKey = (transfer: Transfer): string => `${transfer.fromId}->${transfer.toId}`;
 
-export const Settlement = ({trip, expenses, payments, currentUserId, onPaymentCreated}: SettlementProps) => {
-    const [payingKey, setPayingKey] = useState<string>();
+export const Settlement = ({trip, expenses, payments, currentUserId}: SettlementProps) => {
+    const createPayment = useCreatePayment(trip.id);
+    const payingKey = createPayment.isPending && createPayment.variables
+        ? transferKey(createPayment.variables)
+        : undefined;
     const [actionError, setActionError] = useState<string>('');
 
     const {balances, remaining, transfers, naiveTransfersCount} = calculateSettlement(trip.members, expenses, payments);
@@ -33,16 +36,12 @@ export const Settlement = ({trip, expenses, payments, currentUserId, onPaymentCr
     const showsSavings = naiveTransfersCount > transfers.length;
 
     const handlePaid = async (transfer: Transfer) => {
-        setPayingKey(transferKey(transfer));
         setActionError('');
 
         try {
-            const payment = await createPayment(trip.id, transfer);
-            onPaymentCreated(payment);
+            await createPayment.mutateAsync(transfer);
         } catch {
             setActionError('Не вдалося позначити переказ, спробуйте ще раз');
-        } finally {
-            setPayingKey(undefined);
         }
     };
 

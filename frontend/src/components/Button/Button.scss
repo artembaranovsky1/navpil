@@ -140,6 +140,17 @@
     }
   }
 
+  // іконка + текст в одну лінію, по центру
+  &__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
   &__spinner {
     position: absolute;
     width: 20px;

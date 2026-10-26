@@ -1,6 +1,7 @@
 import './MembersTable.scss'
 import {useState} from "react";
-import {removeMember, type TripMember} from "../../../../api/trips.ts";
+import type {TripMember} from "../../../../api/trips.ts";
+import {useRemoveMember} from "../../../../hooks/mutations.ts";
 import type {ExpenseResponse} from "../../../../api/expense.ts";
 import type {PaymentResponse} from "../../../../api/payments.ts";
 import {ApiError} from "../../../../api/ApiError.ts";
@@ -15,7 +16,6 @@ type MembersTableProps = {
     payments: PaymentResponse[];
     currentUserId?: string;
     currentUserEmail?: string;
-    onRemoved: (userId: string) => void;
 }
 
 const ROLE_LABELS: Record<TripMember['role'], string> = {
@@ -29,9 +29,10 @@ const getRemoveError = (err: unknown): string => {
     return 'Не вдалося видалити учасника';
 };
 
-export const MembersTable = ({tripId, members, expenses, payments, currentUserId, currentUserEmail, onRemoved}: MembersTableProps) => {
+export const MembersTable = ({tripId, members, expenses, payments, currentUserId, currentUserEmail}: MembersTableProps) => {
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-    const [removingId, setRemovingId] = useState<string | null>(null);
+    const removeMember = useRemoveMember(tripId);
+    const removingId = removeMember.isPending ? removeMember.variables : null;
     const [error, setError] = useState<string>('');
 
     const {balances, remaining} = calculateSettlement(members, expenses, payments);
@@ -50,15 +51,11 @@ export const MembersTable = ({tripId, members, expenses, payments, currentUserId
     const handleRemove = async (userId: string) => {
         setOpenMenuId(null);
         setError('');
-        setRemovingId(userId);
 
         try {
-            await removeMember(tripId, userId);
-            onRemoved(userId);
+            await removeMember.mutateAsync(userId);
         } catch (err) {
             setError(getRemoveError(err));
-        } finally {
-            setRemovingId(null);
         }
     };
 

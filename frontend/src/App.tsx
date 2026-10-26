@@ -1,7 +1,6 @@
 import {Route, Routes} from "react-router";
 import {HomePage} from "./pages/HomePage.tsx";
 import {NotFoundPage} from "./pages/NotFoundPage.tsx";
-import {UiKitPage} from "./pages/UiKitPage.tsx";
 import {LoginPage} from "./pages/LoginPage/LoginPage.tsx";
 import {RegisterPage} from "./pages/RegisterPage/RegisterPage.tsx";
 import {TripsPage} from "./pages/TripsPage/TripsPage.tsx";
@@ -13,11 +12,13 @@ import {MembersPage} from "./pages/MembersPage/MembersPage.tsx";
 import {AddExpensePage} from "./pages/AddExpensePage.tsx";
 import {ExpenseDetailPage} from "./pages/ExpenseDetailPage.tsx";
 import {ProtectedRoutes} from "./utils/ProtectedRoutes.tsx";
+import {RootRedirect} from "./utils/RootRedirect.tsx";
 import {AppLayout} from "./components/AppLayout/AppLayout.tsx";
 
 function App() {
     return (
         <Routes>
+            <Route path='/' element={<RootRedirect/>}/>
             <Route path='/home' element={<HomePage/>}/>
 
             <Route path='/login' element={<LoginPage/>}/>
@@ -38,7 +39,6 @@ function App() {
                 </Route>
             </Route>
 
-            <Route path='/ui-kit' element={<UiKitPage/>}/>
             <Route path='*' element={<NotFoundPage/>}/>
         </Routes>
     )

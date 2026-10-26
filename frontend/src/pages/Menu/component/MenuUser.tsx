@@ -1,19 +1,10 @@
-import {useEffect, useState} from "react";
-import {getMe, type User} from "../../../api/user.ts";
+import {useMe} from "../../../hooks/queries.ts";
 import {Skeleton} from "../../../components/Skeleton/Skeleton.tsx";
 
 export const MenuUser = () => {
-    const [user, setUser] = useState<User>()
-    const [isLoading, setIsLoading] = useState<boolean>(true)
+    const {data: user, isPending} = useMe()
 
-    useEffect(() => {
-        getMe()
-            .then(setUser)
-            .catch(() => setUser(undefined))
-            .finally(() => setIsLoading(false))
-    }, []);
-
-    if (isLoading) {
+    if (isPending) {
         return (
             <div className='trip-menu__user'>
                 <Skeleton className='trip-menu__user-photo-skeleton' width={36} height={36} radius={18}/>

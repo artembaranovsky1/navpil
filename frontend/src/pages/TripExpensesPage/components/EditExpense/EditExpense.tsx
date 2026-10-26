@@ -1,33 +1,34 @@
 import './EditExpense.scss'
 import {useEffect, useState} from "react";
+import {createPortal} from "react-dom";
 import {Button} from "../../../../components/Button/Button.tsx";
 import {
     CATEGORY_LABELS,
     EXPENSE_CATEGORIES,
     type ExpenseCategory,
     type ExpenseResponse,
-    updateExpense,
     type UpdateExpenseData
 } from "../../../../api/expense.ts";
+import {useUpdateExpense} from "../../../../hooks/mutations.ts";
 import type {TripMember} from "../../../../api/trips.ts";
 import {ApiError} from "../../../../api/ApiError.ts";
-import {useNavigate} from "react-router";
-
-type FieldErrors = Record<string, string[]>;
-
-// "1 740,5" -> 1740.5
-const parseAmount = (value: string): number => Number(value.replace(/\s/g, '').replace(',', '.'));
+import {
+    EXPENSE_DESCRIPTION_MAX,
+    EXPENSE_NAME_MAX,
+    type FieldErrors,
+    parseAmount,
+    validateExpense
+} from "../../../../utils/expenseValidation.ts";
 
 type EditExpenseProps = {
     tripId: string;
     expense: ExpenseResponse;
     members: TripMember[];
-    onUpdated: (expense: ExpenseResponse) => void;
+    onUpdated: () => void;
     onClose: () => void;
 }
 
 export const EditExpense = ({tripId, expense, members, onUpdated, onClose}: EditExpenseProps) => {
-    const navigate = useNavigate();
 
     const [price, setPrice] = useState<string>(String(expense.amount));
     const [date, setDate] = useState<string>((expense.date ?? expense.createdAt).slice(0, 10));
@@ -40,7 +41,18 @@ export const EditExpense = ({tripId, expense, members, onUpdated, onClose}: Edit
     );
     const [error, setError] = useState<string>('')
     const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
-    const [isSaving, setIsSaving] = useState<boolean>(false)
+    const updateExpense = useUpdateExpense(tripId, expense.id)
+    const isSaving = updateExpense.isPending
+
+    // прибираємо помилку поля, щойно юзер його змінив
+    const clearFieldError = (field: string) => {
+        setFieldErrors((prev) => {
+            if (!prev[field]) return prev;
+            const next = {...prev};
+            delete next[field];
+            return next;
+        });
+    };
 
     const toggleMember = (memberId: string) => {
         setSplitBetween((current) =>
@@ -48,7 +60,20 @@ export const EditExpense = ({tripId, expense, members, onUpdated, onClose}: Edit
                 ? current.filter((id) => id !== memberId)
                 : [...current, memberId]
         );
+        clearFieldError('splitBetween');
     };
+
+    const inputClass = (field: string, extra = '') =>
+        ['edit-expense__input', extra, fieldErrors[field] && 'edit-expense__input--invalid'].filter(Boolean).join(' ');
+
+    const fieldError = (field: string) => fieldErrors[field] && (
+        <p id={`edit-expense-${field}-error`} className="edit-expense__error">{fieldErrors[field][0]}</p>
+    );
+
+    const errorProps = (field: string) => ({
+        'aria-invalid': Boolean(fieldErrors[field]),
+        'aria-describedby': fieldErrors[field] ? `edit-expense-${field}-error` : undefined,
+    });
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -62,44 +87,33 @@ export const EditExpense = ({tripId, expense, members, onUpdated, onClose}: Edit
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError('');
-        setFieldErrors({});
 
-        // 1. Проста перевірка на фронті, щоб не слати явно поганий запит
-        const amountNumber = parseAmount(price);
-
-        if (!price.trim() || Number.isNaN(amountNumber) || amountNumber <= 0) {
-            setFieldErrors({ amount: ['Вкажіть суму більшу за 0'] });
-            return;
-        }
-
-        if (splitBetween.length === 0) {
-            setFieldErrors({ splitBetween: ['Оберіть хоча б одного учасника'] });
-            return;
-        }
+        // 1. Перевірка на фронті, щоб не слати явно поганий запит
+        const errors = validateExpense({price, date, name, description, category, splitBetween});
+        setFieldErrors(errors);
+        if (Object.keys(errors).length > 0) return;
 
         // 2. Збираємо дані для сервера
         const changes: UpdateExpenseData = {
             name: name.trim(),
             description: description.trim() || undefined,
-            amount: amountNumber,
+            amount: parseAmount(price),
             category,
-            date: date || undefined,
+            date,
             paidById: paidById || undefined,
             splitBetween,
         };
 
-        setIsSaving(true);
 
         // 3. Відправляємо й обробляємо результат
         try {
-            const updatedExpense = await updateExpense(tripId, expense.id, changes);
-            onUpdated(updatedExpense);
+            await updateExpense.mutateAsync(changes);
+            onUpdated();
         } catch (err) {
             if (err instanceof ApiError && err.status === 422) {
                 setFieldErrors((err.details ?? {}) as FieldErrors);
             } else if (err instanceof ApiError && err.status === 401) {
-                localStorage.removeItem('token');
-                navigate('/login', { replace: true });
+                // редірект на /login робить ProtectedRoutes
             } else if (err instanceof ApiError && err.status === 403) {
                 setError('Ви не можете редагувати цю витрату');
             } else if (err instanceof ApiError && err.status === 404) {
@@ -109,12 +123,11 @@ export const EditExpense = ({tripId, expense, members, onUpdated, onClose}: Edit
             } else {
                 setError('Немає з’єднання з сервером');
             }
-        } finally {
-            setIsSaving(false);
         }
     };
 
-    return (
+    // портал у body: інакше transform батьківської сторінки (.page-appear) обрізає fixed-фон
+    return createPortal(
         <div className="edit-expense__backdrop" onClick={onClose}>
             <section
                 role="dialog"
@@ -139,31 +152,35 @@ export const EditExpense = ({tripId, expense, members, onUpdated, onClose}: Edit
                             <label htmlFor="edit-expense-amount" className="edit-expense__label">Сума, ₴</label>
                             <input
                                 id="edit-expense-amount"
-                                className="edit-expense__input edit-expense__input--amount"
+                                className={inputClass('amount', 'edit-expense__input--amount')}
                                 type="text"
                                 inputMode="decimal"
                                 value={price}
-                                onChange={(event) => setPrice(event.target.value)}
+                                onChange={(event) => {
+                                    setPrice(event.target.value);
+                                    clearFieldError('amount');
+                                }}
                                 disabled={isSaving}
+                                {...errorProps('amount')}
                             />
-                            {fieldErrors.amount && (
-                                <p className="edit-expense__error">{fieldErrors.amount[0]}</p>
-                            )}
+                            {fieldError('amount')}
                         </div>
 
                         <div className="edit-expense__field">
                             <label htmlFor="edit-expense-date" className="edit-expense__label">Дата</label>
                             <input
                                 id="edit-expense-date"
-                                className="edit-expense__input"
+                                className={inputClass('date')}
                                 type="date"
                                 value={date}
-                                onChange={(event) => setDate(event.target.value)}
+                                onChange={(event) => {
+                                    setDate(event.target.value);
+                                    clearFieldError('date');
+                                }}
                                 disabled={isSaving}
+                                {...errorProps('date')}
                             />
-                            {fieldErrors.date && (
-                                <p className="edit-expense__error">{fieldErrors.date[0]}</p>
-                            )}
+                            {fieldError('date')}
                         </div>
                     </div>
 
@@ -171,33 +188,37 @@ export const EditExpense = ({tripId, expense, members, onUpdated, onClose}: Edit
                         <label htmlFor="edit-expense-name" className="edit-expense__label">За що</label>
                         <input
                             id="edit-expense-name"
-                            className="edit-expense__input edit-expense__input--name"
+                            className={inputClass('name', 'edit-expense__input--name')}
                             type="text"
-                            maxLength={20}
+                            maxLength={EXPENSE_NAME_MAX}
                             value={name}
-                            onChange={(event) => setName(event.target.value)}
+                            onChange={(event) => {
+                                setName(event.target.value);
+                                clearFieldError('name');
+                            }}
                             disabled={isSaving}
+                            {...errorProps('name')}
                         />
-                        {fieldErrors.name && (
-                            <p className="edit-expense__error">{fieldErrors.name[0]}</p>
-                        )}
+                        {fieldError('name')}
                     </div>
 
                     <div className="edit-expense__field">
                         <label htmlFor="edit-expense-description" className="edit-expense__label">Опис</label>
                         <textarea
                             id="edit-expense-description"
-                            className="edit-expense__input edit-expense__input--textarea"
+                            className={inputClass('description', 'edit-expense__input--textarea')}
                             rows={2}
-                            maxLength={200}
+                            maxLength={EXPENSE_DESCRIPTION_MAX}
                             placeholder="Необов’язково"
                             value={description}
-                            onChange={(event) => setDescription(event.target.value)}
+                            onChange={(event) => {
+                                setDescription(event.target.value);
+                                clearFieldError('description');
+                            }}
                             disabled={isSaving}
+                            {...errorProps('description')}
                         />
-                        {fieldErrors.description && (
-                            <p className="edit-expense__error">{fieldErrors.description[0]}</p>
-                        )}
+                        {fieldError('description')}
                     </div>
 
                     <fieldset className="edit-expense__fieldset">
@@ -220,9 +241,7 @@ export const EditExpense = ({tripId, expense, members, onUpdated, onClose}: Edit
                                 </label>
                             ))}
                         </div>
-                        {fieldErrors.category && (
-                            <p className="edit-expense__error">{fieldErrors.category[0]}</p>
-                        )}
+                        {fieldError('category')}
                     </fieldset>
 
                     <div className="edit-expense__row edit-expense__row--wide-gap">
@@ -245,9 +264,7 @@ export const EditExpense = ({tripId, expense, members, onUpdated, onClose}: Edit
                                     </label>
                                 ))}
                             </div>
-                            {fieldErrors.paidById && (
-                                <p className="edit-expense__error">{fieldErrors.paidById[0]}</p>
-                            )}
+                            {fieldError('paidById')}
                         </fieldset>
 
                         <fieldset className="edit-expense__fieldset">
@@ -265,9 +282,7 @@ export const EditExpense = ({tripId, expense, members, onUpdated, onClose}: Edit
                                     </label>
                                 ))}
                             </div>
-                            {fieldErrors.splitBetween && (
-                                <p className="edit-expense__error">{fieldErrors.splitBetween[0]}</p>
-                            )}
+                            {fieldError('splitBetween')}
                         </fieldset>
                     </div>
 
@@ -286,6 +301,7 @@ export const EditExpense = ({tripId, expense, members, onUpdated, onClose}: Edit
                     </div>
                 </form>
             </section>
-        </div>
+        </div>,
+        document.body
     );
 };

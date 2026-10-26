@@ -1,35 +1,36 @@
 import "./NewExpense.scss";
 import {useEffect, useState} from "react";
+import {createPortal} from "react-dom";
 import {Button} from "../Button/Button.tsx";
 import {
     CATEGORY_LABELS,
-    createExpense,
     EXPENSE_CATEGORIES,
-    type ExpenseCategory,
-    type ExpenseResponse
+    type ExpenseCategory
 } from "../../api/expense.ts";
+import {useCreateExpense} from "../../hooks/mutations.ts";
 import type {TripMember} from "../../api/trips.ts";
 import {ApiError} from "../../api/ApiError.ts";
-
-type FieldErrors = Record<string, string[]>;
+import {
+    EXPENSE_DESCRIPTION_MAX,
+    EXPENSE_NAME_MAX,
+    type FieldErrors,
+    parseAmount,
+    validateExpense
+} from "../../utils/expenseValidation.ts";
 
 type NewExpenseProps = {
     tripId: string;
     members: TripMember[];
     currentUserId?: string;
-    onCreated: (expense: ExpenseResponse) => void;
     onClose: () => void;
 }
 
 const todayString = (): string => new Date().toISOString().slice(0, 10);
 
-// "1 740,5" -> 1740.5
-const parseAmount = (value: string): number => Number(value.replace(/\s/g, '').replace(',', '.'));
-
 const formatShare = (amount: number): string =>
     amount.toLocaleString('uk-UA', {maximumFractionDigits: 2});
 
-export const NewExpense = ({tripId, members, currentUserId, onCreated, onClose}: NewExpenseProps) => {
+export const NewExpense = ({tripId, members, currentUserId, onClose}: NewExpenseProps) => {
     const [price, setPrice] = useState<string>('');
     const [date, setDate] = useState<string>(todayString);
     const [name, setName] = useState<string>('');
@@ -38,7 +39,8 @@ export const NewExpense = ({tripId, members, currentUserId, onCreated, onClose}:
     const [paidById, setPaidById] = useState<string | undefined>(currentUserId ?? members[0]?.id);
     const [splitBetween, setSplitBetween] = useState<string[]>(() => members.map((member) => member.id));
 
-    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const createExpense = useCreateExpense(tripId);
+    const isLoading = createExpense.isPending;
     const [error, setError] = useState<string>('');
     const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
@@ -54,38 +56,47 @@ export const NewExpense = ({tripId, members, currentUserId, onCreated, onClose}:
     const amount = parseAmount(price);
     const share = amount > 0 && splitBetween.length > 0 ? amount / splitBetween.length : 0;
 
+    // прибираємо помилку поля, щойно юзер його змінив
+    const clearFieldError = (field: string) => {
+        setFieldErrors((prev) => {
+            if (!prev[field]) return prev;
+            const next = {...prev};
+            delete next[field];
+            return next;
+        });
+    };
+
     const toggleMember = (memberId: string) => {
         setSplitBetween((current) =>
             current.includes(memberId)
                 ? current.filter((id) => id !== memberId)
                 : [...current, memberId]
         );
+        clearFieldError('splitBetween');
     };
+
+    const inputClass = (field: string, extra = '') =>
+        ['new-expense__input', extra, fieldErrors[field] && 'new-expense__input--invalid'].filter(Boolean).join(' ');
+
+    const fieldError = (field: string) => fieldErrors[field] && (
+        <p id={`new-expense-${field}-error`} className="new-expense__error">{fieldErrors[field][0]}</p>
+    );
+
+    const errorProps = (field: string) => ({
+        'aria-invalid': Boolean(fieldErrors[field]),
+        'aria-describedby': fieldErrors[field] ? `new-expense-${field}-error` : undefined,
+    });
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
         e.preventDefault();
         setError('');
-        setFieldErrors({});
 
-        if (!(amount > 0)) {
-            setFieldErrors({amount: ['Вкажіть суму більшу за 0']});
-            return;
-        }
-
-        if (!category) {
-            setFieldErrors({category: ['Оберіть категорію']});
-            return;
-        }
-
-        if (splitBetween.length === 0) {
-            setFieldErrors({splitBetween: ['Оберіть хоча б одного учасника']});
-            return;
-        }
-
-        setIsLoading(true);
+        const errors = validateExpense({price, date, name, description, category, splitBetween});
+        setFieldErrors(errors);
+        if (Object.keys(errors).length > 0 || !category) return;
 
         try {
-            const newExpense = await createExpense(tripId, {
+            await createExpense.mutateAsync({
                 name: name.trim(),
                 description: description.trim() || undefined,
                 amount,
@@ -95,7 +106,6 @@ export const NewExpense = ({tripId, members, currentUserId, onCreated, onClose}:
                 splitBetween,
             });
 
-            onCreated(newExpense);
             onClose();
         } catch (err) {
             if (err instanceof ApiError && err.status === 422) {
@@ -107,12 +117,11 @@ export const NewExpense = ({tripId, members, currentUserId, onCreated, onClose}:
             } else {
                 setError('Немає з’єднання з сервером');
             }
-        } finally {
-            setIsLoading(false);
         }
     };
 
-    return (
+    // портал у body: інакше transform батьківської сторінки (.page-appear) обрізає fixed-фон
+    return createPortal(
         <div className="new-expense__backdrop" onClick={onClose}>
             <section
                 role="dialog"
@@ -137,33 +146,37 @@ export const NewExpense = ({tripId, members, currentUserId, onCreated, onClose}:
                             <label htmlFor="new-expense-amount" className="new-expense__label">Сума, ₴</label>
                             <input
                                 id="new-expense-amount"
-                                className="new-expense__input new-expense__input--amount"
+                                className={inputClass('amount', 'new-expense__input--amount')}
                                 type="text"
                                 inputMode="decimal"
                                 placeholder="0"
                                 value={price}
-                                onChange={(event) => setPrice(event.target.value)}
+                                onChange={(event) => {
+                                    setPrice(event.target.value);
+                                    clearFieldError('amount');
+                                }}
                                 disabled={isLoading}
                                 autoFocus
+                                {...errorProps('amount')}
                             />
-                            {fieldErrors.amount && (
-                                <p className="new-expense__error">{fieldErrors.amount[0]}</p>
-                            )}
+                            {fieldError('amount')}
                         </div>
 
                         <div className="new-expense__field">
                             <label htmlFor="new-expense-date" className="new-expense__label">Дата</label>
                             <input
                                 id="new-expense-date"
-                                className="new-expense__input"
+                                className={inputClass('date')}
                                 type="date"
                                 value={date}
-                                onChange={(event) => setDate(event.target.value)}
+                                onChange={(event) => {
+                                    setDate(event.target.value);
+                                    clearFieldError('date');
+                                }}
                                 disabled={isLoading}
+                                {...errorProps('date')}
                             />
-                            {fieldErrors.date && (
-                                <p className="new-expense__error">{fieldErrors.date[0]}</p>
-                            )}
+                            {fieldError('date')}
                         </div>
                     </div>
 
@@ -171,33 +184,37 @@ export const NewExpense = ({tripId, members, currentUserId, onCreated, onClose}:
                         <label htmlFor="new-expense-name" className="new-expense__label">За що</label>
                         <input
                             id="new-expense-name"
-                            className="new-expense__input new-expense__input--name"
+                            className={inputClass('name', 'new-expense__input--name')}
                             type="text"
-                            maxLength={20}
+                            maxLength={EXPENSE_NAME_MAX}
                             value={name}
-                            onChange={(event) => setName(event.target.value)}
+                            onChange={(event) => {
+                                setName(event.target.value);
+                                clearFieldError('name');
+                            }}
                             disabled={isLoading}
+                            {...errorProps('name')}
                         />
-                        {fieldErrors.name && (
-                            <p className="new-expense__error">{fieldErrors.name[0]}</p>
-                        )}
+                        {fieldError('name')}
                     </div>
 
                     <div className="new-expense__field">
                         <label htmlFor="new-expense-description" className="new-expense__label">Опис</label>
                         <textarea
                             id="new-expense-description"
-                            className="new-expense__input new-expense__input--textarea"
+                            className={inputClass('description', 'new-expense__input--textarea')}
                             rows={2}
-                            maxLength={200}
+                            maxLength={EXPENSE_DESCRIPTION_MAX}
                             placeholder="Необов’язково"
                             value={description}
-                            onChange={(event) => setDescription(event.target.value)}
+                            onChange={(event) => {
+                                setDescription(event.target.value);
+                                clearFieldError('description');
+                            }}
                             disabled={isLoading}
+                            {...errorProps('description')}
                         />
-                        {fieldErrors.description && (
-                            <p className="new-expense__error">{fieldErrors.description[0]}</p>
-                        )}
+                        {fieldError('description')}
                     </div>
 
                     <fieldset className="new-expense__fieldset">
@@ -213,16 +230,17 @@ export const NewExpense = ({tripId, members, currentUserId, onCreated, onClose}:
                                         name="category"
                                         value={cat}
                                         checked={cat === category}
-                                        onChange={() => setCategory(cat)}
+                                        onChange={() => {
+                                            setCategory(cat);
+                                            clearFieldError('category');
+                                        }}
                                         disabled={isLoading}
                                     />
                                     {CATEGORY_LABELS[cat]}
                                 </label>
                             ))}
                         </div>
-                        {fieldErrors.category && (
-                            <p className="new-expense__error">{fieldErrors.category[0]}</p>
-                        )}
+                        {fieldError('category')}
                     </fieldset>
 
                     <div className="new-expense__row new-expense__row--wide-gap">
@@ -245,9 +263,7 @@ export const NewExpense = ({tripId, members, currentUserId, onCreated, onClose}:
                                     </label>
                                 ))}
                             </div>
-                            {fieldErrors.paidById && (
-                                <p className="new-expense__error">{fieldErrors.paidById[0]}</p>
-                            )}
+                            {fieldError('paidById')}
                         </fieldset>
 
                         <fieldset className="new-expense__fieldset">
@@ -272,9 +288,7 @@ export const NewExpense = ({tripId, members, currentUserId, onCreated, onClose}:
                                     );
                                 })}
                             </div>
-                            {fieldErrors.splitBetween && (
-                                <p className="new-expense__error">{fieldErrors.splitBetween[0]}</p>
-                            )}
+                            {fieldError('splitBetween')}
                         </fieldset>
                     </div>
 
@@ -292,6 +306,7 @@ export const NewExpense = ({tripId, members, currentUserId, onCreated, onClose}:
                     </div>
                 </form>
             </section>
-        </div>
+        </div>,
+        document.body
     )
 }

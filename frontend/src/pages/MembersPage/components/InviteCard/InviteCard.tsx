@@ -10,7 +10,6 @@ export const InviteCard = ({tripName, inviteCode}: InviteCardProps) => {
     const [isCopied, setIsCopied] = useState<boolean>(false);
 
     const link = `${window.location.origin}/join?code=${encodeURIComponent(inviteCode)}`;
-    const displayLink = link.replace(/^https?:\/\//, '');
 
     const copyLink = async () => {
         try {
@@ -44,7 +43,6 @@ export const InviteCard = ({tripName, inviteCode}: InviteCardProps) => {
             <h2 className="invite-card__title">Запросити друзів</h2>
             <div className="invite-card__label">Код запрошення</div>
             <div className="invite-card__code">{inviteCode}</div>
-            <div className="invite-card__link">{displayLink}</div>
             <div className="invite-card__buttons">
                 <button type="button" className="invite-card__button invite-card__button--primary" onClick={copyLink}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"

@@ -1,7 +1,9 @@
 import './ExpenseDetail.scss'
 import {useEffect, useState} from "react";
+import {createPortal} from "react-dom";
 import {CategoryIcon} from "../../../../components/CategoryIcon/CategoryIcon.tsx";
-import {CATEGORY_LABELS, deleteExpense, type ExpenseResponse} from "../../../../api/expense.ts";
+import {CATEGORY_LABELS, type ExpenseResponse} from "../../../../api/expense.ts";
+import {useDeleteExpense} from "../../../../hooks/mutations.ts";
 import type {TripMember} from "../../../../api/trips.ts";
 import {getExpenseShares, getMemberName} from "../../../../utils/settle.ts";
 import {formatLongDate, formatMoney, pluralize} from "../../../../utils/format.ts";
@@ -14,7 +16,7 @@ type ExpenseDetailProps = {
     currentUserId?: string;
     onClose: () => void;
     onEdit: () => void;
-    onDeleted: (expenseId: string) => void;
+    onDeleted: () => void;
 }
 
 const formatTime = (date: string): string =>
@@ -22,7 +24,8 @@ const formatTime = (date: string): string =>
 
 export const ExpenseDetail = ({tripId, expense, members, currentUserId, onClose, onEdit, onDeleted}: ExpenseDetailProps) => {
     const [isConfirmingDelete, setIsConfirmingDelete] = useState<boolean>(false);
-    const [isDeleting, setIsDeleting] = useState<boolean>(false);
+    const deleteExpense = useDeleteExpense(tripId);
+    const isDeleting = deleteExpense.isPending;
     const [error, setError] = useState<string>('');
 
     useEffect(() => {
@@ -59,19 +62,18 @@ export const ExpenseDetail = ({tripId, expense, members, currentUserId, onClose,
             return;
         }
 
-        setIsDeleting(true);
         setError('');
 
         try {
-            await deleteExpense(tripId, expense.id);
-            onDeleted(expense.id);
+            await deleteExpense.mutateAsync(expense.id);
+            onDeleted();
         } catch {
             setError('Не вдалося видалити витрату, спробуйте ще раз');
-            setIsDeleting(false);
         }
     };
 
-    return (
+    // портал у body: інакше transform батьківської сторінки (.page-appear) обрізає fixed-фон
+    return createPortal(
         <div className="expense-detail__backdrop" onClick={onClose}>
             <section
                 role="dialog"
@@ -184,6 +186,7 @@ export const ExpenseDetail = ({tripId, expense, members, currentUserId, onClose,
                     {isDeleting ? 'Видаляю…' : isConfirmingDelete ? 'Натисніть ще раз, щоб видалити' : 'Видалити витрату'}
                 </button>
             </section>
-        </div>
+        </div>,
+        document.body
     );
 };

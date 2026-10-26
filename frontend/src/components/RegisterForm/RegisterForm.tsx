@@ -1,41 +1,74 @@
 import {Button} from "../Button/Button.tsx";
 import {Link, useNavigate} from "react-router";
 import {useState} from "react";
-import {register} from "../../api/auth.ts";
+import {useRegister} from "../../hooks/mutations.ts";
 import {ApiError} from "../../api/ApiError.ts";
+
+type RegisterFields = 'name' | 'email' | 'password';
+type FieldErrors = Partial<Record<RegisterFields, string>>;
+
+const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
+
+const validate = (name: string, email: string, password: string) => {
+    const errors: FieldErrors = {};
+
+    if (name.trim().length < 3) {
+        errors.name = "Імʼя повинно складатися хоча б з 3 літер";
+    }
+
+    if (!email.trim()) {
+        errors.email = 'Вкажіть email'
+    } else if (!EMAIL_REGEX.test(email)) {
+        errors.email = 'Невірний формат email'
+    }
+
+    if (!password.trim()) {
+        errors.password = 'Вкажіть пароль'
+    } else if (password.length < 8) {
+        errors.password = 'Пароль має складатися хоча б з 8 символів'
+    }
+
+    return errors;
+}
+
 
 export const RegisterForm = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
-    const [isLoading, setIsLoading] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+    const register = useRegister();
+    const isLoading = register.isPending;
 
     const navigate = useNavigate();
+
+    const clearFieldError = (field: RegisterFields) => {
+        setFieldErrors((prev) => ({...prev, [field]: undefined}));
+    }
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
         e.preventDefault();
         setError('')
-        setFieldErrors({})
-        setIsLoading(true);
+
+        const errors = validate(name, email, password);
+        setFieldErrors(errors)
+
+        if (Object.keys(errors).length > 0) return;
 
         try {
-            await register(name, email, password)
-
-            navigate('/login', {replace: true}); // потім замінити на trips
+            await register.mutateAsync({name: name.trim(), email: email.trim(), password: password.trim()});
+            navigate('/trips', { replace: true });
         } catch (err) {
             if (err instanceof ApiError && err.status === 409) {
                 setError('Цей email уже зареєстрований');
             } else if (err instanceof ApiError && err.status === 422) {
-                setFieldErrors((err.details ?? {}) as Record<string, string[]>);
+                setError('Трапилась помилка');
             } else if (err instanceof ApiError) {
                 setError("Щось пішло не так, спробуй ще")
             } else {
                 setError("Немає зєднання")
             }
-        } finally {
-            setIsLoading(false);
         }
     }
 
@@ -44,7 +77,7 @@ export const RegisterForm = () => {
         <div className='login-form'>
             <h1 className="login-page__title text-h6">Створити акаунт</h1>
             <div className='text-small'>Друзі побачать ваше ім'я у спільних подорожах.</div>
-            <form className='login-form__content' onSubmit={handleSubmit}>
+            <form className='login-form__content' onSubmit={handleSubmit} noValidate>
                 <div className="login-form__field">
                     <div className='text-body'>Імʼя</div>
                     <input
@@ -53,12 +86,17 @@ export const RegisterForm = () => {
                         type="text"
                         autoComplete="name"
                         value={name}
-                        onChange={(event) => setName(event.target.value)}
+                        onChange={(event) => {
+                            clearFieldError('name');
+                            setName(event.target.value)
+                        }}
                         disabled={isLoading}
                         required
                     />
-                    {fieldErrors.name && (
-                        <p className="login-page__error text-small">{fieldErrors.name[0]}</p>
+                    {fieldErrors?.name && (
+                        <p id="login-name-error" className="login-form__field-error">
+                            {fieldErrors.name}
+                        </p>
                     )}
                 </div>
 
@@ -70,12 +108,17 @@ export const RegisterForm = () => {
                         type="email"
                         autoComplete="email"
                         value={email}
-                        onChange={(event) => setEmail(event.target.value)}
+                        onChange={(event) => {
+                            clearFieldError('email');
+                            setEmail(event.target.value)
+                        }}
                         disabled={isLoading}
                         required
                     />
-                    {fieldErrors.email && (
-                        <p className="login-page__error text-small">{fieldErrors.email[0]}</p>
+                    {fieldErrors?.email && (
+                        <p id="login-email-error" className="login-form__field-error">
+                            {fieldErrors.email}
+                        </p>
                     )}
                 </div>
                 <div className="login-form__field">
@@ -86,12 +129,17 @@ export const RegisterForm = () => {
                         type="password"
                         autoComplete="current-password"
                         value={password}
-                        onChange={(event) => setPassword(event.target.value)}
+                        onChange={(event) => {
+                            clearFieldError('password');
+                            setPassword(event.target.value)
+                        }}
                         disabled={isLoading}
                         required
                     />
-                    {fieldErrors.password && (
-                        <p className="login-page__error text-small">{fieldErrors.password[0]}</p>
+                    {fieldErrors?.password && (
+                        <p id="login-password-error" className="login-form__field-error">
+                            {fieldErrors.password}
+                        </p>
                     )}
                 </div>
                 {error && (

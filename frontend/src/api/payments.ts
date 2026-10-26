@@ -1,4 +1,5 @@
 import {ApiError} from "./ApiError.ts";
+import {authFetch} from "./authFetch.ts";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -21,7 +22,7 @@ export type CreatePaymentData = {
 export const getPayments = async (tripId: string): Promise<PaymentResponse[]> => {
     const token = localStorage.getItem('token');
 
-    const response = await fetch(`${API_URL}/rooms/${tripId}/payments`, {
+    const response = await authFetch(`${API_URL}/rooms/${tripId}/payments`, {
         headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -37,7 +38,7 @@ export const getPayments = async (tripId: string): Promise<PaymentResponse[]> =>
 export const createPayment = async (tripId: string, paymentData: CreatePaymentData): Promise<PaymentResponse> => {
     const token = localStorage.getItem('token');
 
-    const response = await fetch(`${API_URL}/rooms/${tripId}/payments`, {
+    const response = await authFetch(`${API_URL}/rooms/${tripId}/payments`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

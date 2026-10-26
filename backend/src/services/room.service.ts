@@ -191,8 +191,8 @@ export const updateRoom = async (foundRoom: Room, changes: RoomUpdateInput): Pro
         data: {
             name: changes.name,
             description: changes.description,
-            startDate: toDbDate(changes.startDate),
-            endDate: toDbDate(changes.endDate),
+            startDate: changes.startDate === null ? null : toDbDate(changes.startDate),
+            endDate: changes.endDate === null ? null : toDbDate(changes.endDate),
         },
     });
 

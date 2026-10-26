@@ -1,0 +1,73 @@
+@use '../../../../styles/color' as *;
+
+.trip-settings {
+  padding: 24px;
+  border-radius: 20px;
+  background: $surface;
+  border: 1px solid $divider;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.trip-settings__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 500;
+  color: $ink;
+}
+
+.trip-settings__text {
+  margin: -4px 0 4px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #55554F;
+}
+
+.trip-settings__button .button__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trip-settings__confirm {
+  padding: 16px;
+  border-radius: 16px;
+  background: $red-tint;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.trip-settings__confirm-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: $ink;
+}
+
+.trip-settings__confirm-actions {
+  display: flex;
+  gap: 8px;
+
+  .button {
+    flex: 1;
+  }
+}
+
+.trip-settings__confirm-delete.button--danger {
+  background: $red;
+  border-color: $red;
+  color: $surface;
+
+  &:hover:not(:disabled) {
+    background: #a8322a;
+    border-color: #a8322a;
+  }
+}
+
+.trip-settings__error {
+  margin: 0;
+  font-size: 13px;
+  color: $red;
+}

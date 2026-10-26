@@ -101,6 +101,15 @@
   }
 }
 
+.expenses-table__row {
+  cursor: pointer;
+  transition: background-color 0.15s;
+
+  &:hover {
+    background-color: $background;
+  }
+}
+
 .expenses-table__name {
   display: flex;
   align-items: center;

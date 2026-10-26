@@ -1,59 +1,26 @@
 import './SettlePage.scss'
-import {useEffect, useState} from "react";
+import {useState} from "react";
 import {useParams} from "react-router";
-import {type ExpenseResponse, getExpenses} from "../../api/expense.ts";
-import {getPayments, type PaymentResponse} from "../../api/payments.ts";
-import {getTrip, type TripResponse} from "../../api/trips.ts";
-import {getMe} from "../../api/user.ts";
+import {useTripPageData} from "../../hooks/queries.ts";
 import {NewExpense} from "../../components/NewExpense/NewExpense.tsx";
 import {TripHeader} from "../../components/TripHeader/TripHeader.tsx";
 import {Settlement} from "../../components/Settlement/Settlement.tsx";
-import {ShareSummaryButton} from "../../components/ShareSummaryButton/ShareSummaryButton.tsx";
 import {TripPageSkeleton} from "../../components/Skeleton/PageSkeletons.tsx";
+import {MemberAvatars} from "../TripExpensesPage/components/MemberAvatars/MemberAvatars.tsx";
 
 export const SettlePage = () => {
-    const [trip, setTrip] = useState<TripResponse | null>(null);
-    const [expenses, setExpenses] = useState<ExpenseResponse[]>([]);
-    const [payments, setPayments] = useState<PaymentResponse[]>([]);
-    const [currentUserId, setCurrentUserId] = useState<string>();
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string>('');
     const [isNewExpenseOpen, setIsNewExpenseOpen] = useState<boolean>(false);
 
     const {tripId} = useParams();
+    const {trip, expenses, payments, currentUser, isPending, isError} = useTripPageData(tripId);
+    const currentUserId = currentUser?.id;
 
-    useEffect(() => {
-        if (!tripId) return;
-
-        const loadSettlement = async () => {
-            try {
-                const [tripData, expensesData, paymentsData, user] = await Promise.all([
-                    getTrip(tripId),
-                    getExpenses(tripId),
-                    getPayments(tripId),
-                    getMe(),
-                ]);
-
-                setTrip(tripData);
-                setExpenses(expensesData);
-                setPayments(paymentsData);
-                setCurrentUserId(user.id);
-            } catch {
-                setError('Не вдалося завантажити розрахунок');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        loadSettlement();
-    }, [tripId]);
-
-    if (isLoading) {
+    if (isPending) {
         return <TripPageSkeleton/>;
     }
 
-    if (error || !trip || !tripId) {
-        return <p role="alert">{error || 'Подорож не знайдено'}</p>;
+    if (isError || !trip || !tripId) {
+        return <p role="alert">{isError ? 'Не вдалося завантажити розрахунок' : 'Подорож не знайдено'}</p>;
     }
 
     return (
@@ -61,7 +28,7 @@ export const SettlePage = () => {
             <TripHeader
                 trip={trip}
                 onAddExpense={() => setIsNewExpenseOpen(true)}
-                actions={<ShareSummaryButton trip={trip} expenses={expenses} payments={payments}/>}
+                actions={<MemberAvatars tripId={tripId} members={trip.members} currentUserId={currentUserId}/>}
             />
 
             <Settlement
@@ -69,7 +36,6 @@ export const SettlePage = () => {
                 expenses={expenses}
                 payments={payments}
                 currentUserId={currentUserId}
-                onPaymentCreated={(payment) => setPayments((current) => [...current, payment])}
             />
 
             {isNewExpenseOpen && (
@@ -77,7 +43,6 @@ export const SettlePage = () => {
                     tripId={tripId}
                     members={trip.members}
                     currentUserId={currentUserId}
-                    onCreated={(expense) => setExpenses((current) => [...current, expense])}
                     onClose={() => setIsNewExpenseOpen(false)}
                 />
             )}

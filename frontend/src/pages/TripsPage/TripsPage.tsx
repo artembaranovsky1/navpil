@@ -1,7 +1,6 @@
 import './TripsPage.scss'
-import {flattenTrips, getTrips, getTripsSummary, type TripResponse, type TripsSummaryResponse} from "../../api/trips.ts";
-import {useEffect, useState} from "react";
-import {getMe} from "../../api/user.ts";
+import {flattenTrips, type TripResponse} from "../../api/trips.ts";
+import {useMe, useTrips, useTripsSummary} from "../../hooks/queries.ts";
 import {Button} from "../../components/Button/Button.tsx";
 import {useNavigate} from "react-router";
 import {ActiveBlock} from "./components/ActiveBlock.tsx";
@@ -11,37 +10,15 @@ import {formatMoney, formatSignedMoney} from "../../utils/format.ts";
 import {TripsPageSkeleton} from "../../components/Skeleton/PageSkeletons.tsx";
 
 export const TripsPage = () => {
-    const [trips, setTrips] = useState<TripResponse[]>([])
-    const [userName, setUserName] = useState<string>()
-    const [summary, setSummary] = useState<TripsSummaryResponse | null>(null)
-
-    const [isLoading, setIsLoading] = useState<boolean>(true)
-    const [error, setError] = useState<string>('')
-
-    useEffect(() => {
-        const loadTrips = async () => {
-            try {
-                const [data, user, summaryData] = await Promise.all([
-                    getTrips(),
-                    getMe(),
-                    // без підсумків сторінка все одно працює — замість цифр буде «—»
-                    getTripsSummary().catch(() => null),
-                ])
-
-                setTrips(flattenTrips(data))
-                setUserName(user.name)
-                setSummary(summaryData)
-            } catch {
-                setError('Не вдалося завантажити подорожі')
-            } finally {
-                setIsLoading(false)
-            }
-        }
-
-        loadTrips()
-    }, []);
+    const tripsQuery = useTrips()
+    const meQuery = useMe()
+    // без підсумків сторінка все одно працює — замість цифр буде «—»
+    const summary = useTripsSummary().data ?? null
 
     const navigate = useNavigate();
+
+    const trips = tripsQuery.data ? flattenTrips(tripsQuery.data) : []
+    const userName = meQuery.data?.name
 
     const activeTrips: TripResponse[] = trips.filter((trip) => trip.status === "active")
     const pastTrips = trips.filter((trip) => trip.status === "past")
@@ -49,12 +26,12 @@ export const TripsPage = () => {
 
     const myBalance = summary?.myBalance ?? 0
 
-    if (isLoading) {
+    if (tripsQuery.isPending || meQuery.isPending) {
         return <TripsPageSkeleton/>;
     }
 
-    if (error) {
-        return <p role="alert">{error}</p>;
+    if (tripsQuery.isError || meQuery.isError) {
+        return <p role="alert">Не вдалося завантажити подорожі</p>;
     }
 
     return <div className="trips-page page-appear">

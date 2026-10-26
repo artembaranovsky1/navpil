@@ -1,77 +1,48 @@
 import './MembersPage.scss'
-import {ShareSummaryButton} from "../../components/ShareSummaryButton/ShareSummaryButton.tsx";
 import {TripHeader} from "../../components/TripHeader/TripHeader.tsx";
 import {NewExpense} from "../../components/NewExpense/NewExpense.tsx";
-import {useEffect, useState} from "react";
-import {getTrip, type TripResponse} from "../../api/trips.ts";
-import {type ExpenseResponse, getExpenses} from "../../api/expense.ts";
-import {getPayments, type PaymentResponse} from "../../api/payments.ts";
-import {getMe, type User} from "../../api/user.ts";
+import {useState} from "react";
+import {useTripPageData} from "../../hooks/queries.ts";
+import {useDeleteTrip} from "../../hooks/mutations.ts";
 import {useNavigate, useParams} from "react-router";
 import {MembersTable} from "./components/MembersTable/MembersTable.tsx";
 import {InviteCard} from "./components/InviteCard/InviteCard.tsx";
 import {TripPageSkeleton} from "../../components/Skeleton/PageSkeletons.tsx";
+import {MemberAvatars} from "../TripExpensesPage/components/MemberAvatars/MemberAvatars.tsx";
+import {EditTrip} from "../NewTripPage/EditTrip.tsx";
+import {TripSettingsCard} from "./components/TripSettingsCard/TripSettingsCard.tsx";
 
 export const MembersPage = () => {
-    const [trip, setTrip] = useState<TripResponse | null>(null);
-    const [expenses, setExpenses] = useState<ExpenseResponse[]>([]);
-    const [payments, setPayments] = useState<PaymentResponse[]>([]);
-    const [currentUser, setCurrentUser] = useState<User>();
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string>('');
     const [isNewExpenseOpen, setIsNewExpenseOpen] = useState<boolean>(false);
+    const [isEditTripOpen, setIsEditTripOpen] = useState<boolean>(false);
 
     const {tripId} = useParams();
     const navigate = useNavigate();
+    const {trip, expenses, payments, currentUser, isPending, isError} = useTripPageData(tripId);
+    const deleteTripMutation = useDeleteTrip(tripId ?? '');
+    const currentUserId = currentUser?.id;
 
-    useEffect(() => {
-        if (!tripId) return;
-
-        const loadMembers = async () => {
-            try {
-                const [tripData, expensesData, paymentsData, user] = await Promise.all([
-                    getTrip(tripId),
-                    getExpenses(tripId),
-                    getPayments(tripId),
-                    getMe(),
-                ]);
-
-                setExpenses(expensesData)
-                setPayments(paymentsData)
-                setTrip(tripData)
-                setCurrentUser(user)
-            } catch {
-                setError('Не вдалося завантажити учасників')
-                navigate('/login', {replace: true});
-            } finally {
-                setIsLoading(false)
-            }
-        }
-
-        loadMembers()
-    }, [tripId, navigate])
-
-    if (isLoading) {
+    if (isPending) {
         return <TripPageSkeleton/>;
     }
 
-    if (error || !trip || !tripId) {
-        return <p role="alert">{error || 'Подорож не знайдено'}</p>;
+    if (isError || !trip || !tripId) {
+        return <p role="alert">{isError ? 'Не вдалося завантажити учасників' : 'Подорож не знайдено'}</p>;
     }
 
-    const handleMemberRemoved = (userId: string) => {
-        setTrip((current) => current && {
-            ...current,
-            members: current.members.filter((member) => member.id !== userId),
-        });
+    const handleDeleteTrip = async () => {
+        await deleteTripMutation.mutateAsync();
+        navigate('/trips', {replace: true});
     };
+
+    const isOwner = trip.members.some((member) => member.id === currentUserId && member.role === 'owner');
 
     return (
         <div className="members-page page-appear">
             <TripHeader
                 trip={trip}
                 onAddExpense={() => setIsNewExpenseOpen(true)}
-                actions={<ShareSummaryButton trip={trip} expenses={expenses} payments={payments}/>}
+                actions={<MemberAvatars tripId={tripId} members={trip.members} currentUserId={currentUserId}/>}
             />
 
             <div className="members-page__columns">
@@ -83,13 +54,18 @@ export const MembersPage = () => {
                         payments={payments}
                         currentUserId={currentUser?.id}
                         currentUserEmail={currentUser?.email}
-                        onRemoved={handleMemberRemoved}
                     />
 
                 </div>
 
                 <div className="members-page__aside">
                     <InviteCard tripName={trip.name} inviteCode={trip.inviteCode}/>
+                    <TripSettingsCard
+                        tripName={trip.name}
+                        canDelete={isOwner}
+                        onEdit={() => setIsEditTripOpen(true)}
+                        onDelete={handleDeleteTrip}
+                    />
                 </div>
             </div>
 
@@ -98,8 +74,15 @@ export const MembersPage = () => {
                     tripId={tripId}
                     members={trip.members}
                     currentUserId={currentUser?.id}
-                    onCreated={(expense) => setExpenses((current) => [...current, expense])}
                     onClose={() => setIsNewExpenseOpen(false)}
+                />
+            )}
+
+            {isEditTripOpen && (
+                <EditTrip
+                    trip={trip}
+                    onUpdated={() => setIsEditTripOpen(false)}
+                    onClose={() => setIsEditTripOpen(false)}
                 />
             )}
         </div>

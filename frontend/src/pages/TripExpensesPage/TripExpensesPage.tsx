@@ -1,10 +1,7 @@
 import './TripExpensesPage.scss'
-import {useEffect, useState} from "react";
-import {useNavigate, useParams} from "react-router";
-import {type ExpenseResponse, getExpenses} from "../../api/expense.ts";
-import {getPayments, type PaymentResponse} from "../../api/payments.ts";
-import {getTrip, type TripResponse} from "../../api/trips.ts";
-import {getMe} from "../../api/user.ts";
+import {useState} from "react";
+import {useParams} from "react-router";
+import {useTripPageData} from "../../hooks/queries.ts";
 import {NewExpense} from "../../components/NewExpense/NewExpense.tsx";
 import {ExpensesTable} from "../../components/ExpensesTable/ExpensesTable.tsx";
 import {TripHeader} from "../../components/TripHeader/TripHeader.tsx";
@@ -20,56 +17,20 @@ import {EditExpense} from "./components/EditExpense/EditExpense.tsx";
 import {TripPageSkeleton} from "../../components/Skeleton/PageSkeletons.tsx";
 
 export const TripExpensesPage = () => {
-    const [expenses, setExpenses] = useState<ExpenseResponse[]>([])
-    const [payments, setPayments] = useState<PaymentResponse[]>([])
-    const [trip, setTrip] = useState<TripResponse | null>(null);
-    const [currentUserId, setCurrentUserId] = useState<string>();
-    const [isLoading, setIsLoading] = useState<boolean>(true)
-    const [error, setError] = useState<string>('')
-
     const [isNewExpenseOpen, setIsNewExpenseOpen] = useState<boolean>(false)
     const [selectedExpenseId, setSelectedExpenseId] = useState<string>()
     const [isEditingExpense, setIsEditingExpense] = useState<boolean>(false)
 
-    console.log(trip)
-
-    const navigate = useNavigate();
-
     const {tripId} = useParams()
+    const {trip, expenses, payments, currentUser, isPending, isError} = useTripPageData(tripId)
+    const currentUserId = currentUser?.id
 
-    useEffect(() => {
-        if (!tripId) return;
-
-        const loadExpenses = async () => {
-            try {
-                const [tripData, expensesData, paymentsData, user] = await Promise.all([
-                    getTrip(tripId),
-                    getExpenses(tripId),
-                    getPayments(tripId),
-                    getMe(),
-                ]);
-
-                setExpenses(expensesData)
-                setPayments(paymentsData)
-                setTrip(tripData)
-                setCurrentUserId(user.id)
-            } catch {
-                setError('Не вдалося завантажити витрати')
-                navigate('/login', {replace: true});
-            } finally {
-                setIsLoading(false)
-            }
-        }
-
-        loadExpenses()
-    }, [tripId])
-
-    if (isLoading) {
+    if (isPending) {
         return <TripPageSkeleton/>;
     }
 
-    if (error || !trip || !tripId) {
-        return <p role="alert">{error || 'Подорож не знайдено'}</p>;
+    if (isError || !trip || !tripId) {
+        return <p role="alert">{isError ? 'Не вдалося завантажити витрати' : 'Подорож не знайдено'}</p>;
     }
 
     const selectedExpense = expenses.find((expense) => expense.id === selectedExpenseId);
@@ -114,7 +75,6 @@ export const TripExpensesPage = () => {
                     tripId={tripId}
                     members={trip.members}
                     currentUserId={currentUserId}
-                    onCreated={(expense) => setExpenses((current) => [...current, expense])}
                     onClose={() => setIsNewExpenseOpen(false)}
                 />
             )}
@@ -127,10 +87,7 @@ export const TripExpensesPage = () => {
                     currentUserId={currentUserId}
                     onClose={() => setSelectedExpenseId(undefined)}
                     onEdit={() => setIsEditingExpense(true)}
-                    onDeleted={(expenseId) => {
-                        setExpenses((current) => current.filter((expense) => expense.id !== expenseId))
-                        setSelectedExpenseId(undefined)
-                    }}
+                    onDeleted={() => setSelectedExpenseId(undefined)}
                 />
             )}
 
@@ -139,10 +96,7 @@ export const TripExpensesPage = () => {
                     tripId={tripId}
                     expense={selectedExpense}
                     members={trip.members}
-                    onUpdated={(updated) => {
-                        setExpenses((current) => current.map((expense) => expense.id === updated.id ? updated : expense))
-                        setIsEditingExpense(false)
-                    }}
+                    onUpdated={() => setIsEditingExpense(false)}
                     onClose={() => setIsEditingExpense(false)}
                 />
             )}

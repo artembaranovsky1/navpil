@@ -1,4 +1,5 @@
 import {ApiError} from "./ApiError.ts";
+import {authFetch} from "./authFetch.ts";
 
 export type TripMember = {
     id: string
@@ -37,12 +38,20 @@ export type CreateTripData = {
     endDate?: string;
 }
 
+export type UpdateTripData = {
+    name?: string;
+    description?: string;
+    // null — прибрати дату
+    startDate?: string | null;
+    endDate?: string | null;
+}
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 export const getTrips = async (): Promise<TripsResponse> => {
     const token = localStorage.getItem('token');
 
-    const response = await fetch(`${API_URL}/rooms`, {
+    const response = await authFetch(`${API_URL}/rooms`, {
         headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -56,7 +65,7 @@ export const getTrips = async (): Promise<TripsResponse> => {
 export const getTrip = async (tripId: string): Promise<TripResponse> => {
     const token = localStorage.getItem('token');
 
-    const response = await fetch(`${API_URL}/rooms/${tripId}`, {
+    const response = await authFetch(`${API_URL}/rooms/${tripId}`, {
         headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -72,7 +81,7 @@ export const getTrip = async (tripId: string): Promise<TripResponse> => {
 export const createTrip = async (tripData: CreateTripData): Promise<TripResponse>  => {
     const token = localStorage.getItem('token');
 
-    const response = await fetch(`${API_URL}/rooms`, {
+    const response = await authFetch(`${API_URL}/rooms`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -93,7 +102,7 @@ export const createTrip = async (tripData: CreateTripData): Promise<TripResponse
 export const joinTrip = async (code: string): Promise<TripResponse> => {
     const token = localStorage.getItem('token');
 
-    const response = await fetch(`${API_URL}/rooms/join`, {
+    const response = await authFetch(`${API_URL}/rooms/join`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -114,7 +123,7 @@ export const joinTrip = async (code: string): Promise<TripResponse> => {
 export const removeMember = async (tripId: string, userId: string): Promise<void> => {
     const token = localStorage.getItem('token');
 
-    const response = await fetch(`${API_URL}/rooms/${tripId}/members/${userId}`, {
+    const response = await authFetch(`${API_URL}/rooms/${tripId}/members/${userId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
     });
@@ -125,6 +134,39 @@ export const removeMember = async (tripId: string, userId: string): Promise<void
     }
 }
 
+export const deleteTrip = async (tripId: string): Promise<void> => {
+    const token = localStorage.getItem('token');
+
+    const response = await authFetch(`${API_URL}/rooms/${tripId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new ApiError(response.status, data.error ?? 'remove this room failed', data.details);
+    }
+
+    return;
+}
+
+export const updateTrip = async (tripId: string, changes: UpdateTripData): Promise<TripResponse> => {
+    const token = localStorage.getItem('token');
+
+    const response = await authFetch(`${API_URL}/rooms/${tripId}`, {
+        method: 'PATCH',
+        headers: {'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(changes),
+    })
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new ApiError(response.status, data.error ?? 'update trip failed', data.details);
+    }
+
+    return data;
+}
 
 export type TripSummary = {
     // скільки витратили всі разом
@@ -143,7 +185,7 @@ export type TripsSummaryResponse = {
 export const getTripsSummary = async (): Promise<TripsSummaryResponse> => {
     const token = localStorage.getItem('token');
 
-    const response = await fetch(`${API_URL}/rooms/summary`, {
+    const response = await authFetch(`${API_URL}/rooms/summary`, {
         headers: { Authorization: `Bearer ${token}` },
     });
 

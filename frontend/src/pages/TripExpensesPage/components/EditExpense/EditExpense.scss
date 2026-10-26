@@ -122,6 +122,11 @@
     padding: 14px 16px;
     resize: vertical;
   }
+
+  &--invalid,
+  &--invalid:focus {
+    border-color: $red;
+  }
 }
 
 .edit-expense__fieldset {
