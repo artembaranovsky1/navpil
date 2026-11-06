@@ -14,14 +14,65 @@
   flex-direction: column;
 
   background-color: #FFF;
-  border-right: 1px solid #ECECE8
+  border-right: 1px solid #ECECE8;
+
+  // як MOBILE_QUERY в AppLayout.tsx: меню виїжджає зліва, як у Claude
+  @media (max-width: 900px) {
+    position: fixed;
+    left: 0;
+    z-index: 40;
+    width: min(300px, 85vw);
+    height: 100dvh;
+    box-sizing: border-box;
+    padding: calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom));
+    transform: translateX(-100%);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+    &--open {
+      transform: translateX(0);
+      box-shadow: 8px 0 32px rgba(17, 17, 17, 0.12);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.trip-menu__head {
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.trip-menu__close {
+  display: none;
+
+  @media (max-width: 900px) {
+    width: 40px;
+    height: 40px;
+    margin-right: -6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: $ink;
+    cursor: pointer;
+
+    &:hover,
+    &:active {
+      background: $ghost-hover;
+    }
+  }
 }
 
 .trip-menu__logo {
   background: url('/navpil-logo.png') no-repeat center / contain;
   width: 120px;
   aspect-ratio: 1740 / 520;
-  margin-bottom: 32px;
   display: block;
 }
 

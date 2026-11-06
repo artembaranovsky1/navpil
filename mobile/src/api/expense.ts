@@ -106,3 +106,12 @@ export const updateExpense = async (
 
     return handleResponse<ExpenseResponse>(response);
 }
+
+export const deleteExpense = async (tripId: string, expenseId: string): Promise<void> => {
+    const response = await fetch(`${API_URL}/rooms/${tripId}/items/${expenseId}`, {
+        method: 'DELETE',
+        headers: await authHeaders(),
+    })
+
+    await handleResponse<void>(response);
+}

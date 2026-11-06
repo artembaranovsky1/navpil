@@ -70,7 +70,7 @@ export const MembersTable = ({tripId, members, expenses, payments, currentUserId
                     <thead>
                     <tr>
                         <th className="members-table__th">Учасник</th>
-                        <th className="members-table__th">Роль</th>
+                        <th className="members-table__th members-table__col--wide">Роль</th>
                         <th className="members-table__th members-table__th--right">Заплатив</th>
                         <th className="members-table__th members-table__th--right">Баланс</th>
                         <th className="members-table__th members-table__th--actions">
@@ -96,6 +96,9 @@ export const MembersTable = ({tripId, members, expenses, payments, currentUserId
                                             <span className="members-table__name">
                                                 {member.name}
                                                 {isMe && <span className="members-table__you"> · ти</span>}
+                                                {member.role === 'owner' && (
+                                                    <span className="members-table__role-inline"> · {ROLE_LABELS.owner}</span>
+                                                )}
                                             </span>
                                             <span className="members-table__sub">
                                                 {isMe && currentUserEmail
@@ -107,7 +110,7 @@ export const MembersTable = ({tripId, members, expenses, payments, currentUserId
                                         </span>
                                     </span>
                                 </td>
-                                <td className={member.role === 'owner' ? 'members-table__td' : 'members-table__td members-table__td--role'}>
+                                <td className={member.role === 'owner' ? 'members-table__td members-table__col--wide' : 'members-table__td members-table__td--role members-table__col--wide'}>
                                     {member.role === 'owner'
                                         ? <span className="members-table__role-badge">{ROLE_LABELS.owner}</span>
                                         : ROLE_LABELS.member}

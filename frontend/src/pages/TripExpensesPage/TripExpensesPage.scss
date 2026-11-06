@@ -7,10 +7,12 @@
   flex-direction: column;
   gap: 24px;
 
-  @media (max-width: 600px) {
-    padding: 24px 16px;
+  // як у мобільному макеті: 24px з боків і місце під кнопку «+» внизу
+  @media (max-width: 900px) {
+    padding: 24px 24px 112px;
   }
 }
+
 
 .trip-expenses-page__columns {
   display: flex;
@@ -33,4 +35,12 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+// на мобільному лишаємо тільки те, що є в макеті: підсумок, категорії, вкладки й список
+// (в кінці файлу — щоб перебити display у __aside)
+.trip-expenses-page__desktop-only {
+  @media (max-width: 900px) {
+    display: none;
+  }
 }

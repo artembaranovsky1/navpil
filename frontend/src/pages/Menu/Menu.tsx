@@ -11,14 +11,35 @@ const navLinkClass = ({isActive}: { isActive: boolean }) =>
 const travelLinkClass = ({isActive}: { isActive: boolean }) =>
     isActive ? 'trip-menu__travel trip-menu__travel--active text-h15' : 'trip-menu__travel text-h15'
 
-export const Menu = () => {
+type MenuProps = {
+    id?: string;
+    // на мобільному меню — висувна панель
+    isOpen: boolean;
+    inert?: boolean;
+    onClose: () => void;
+}
+
+export const Menu = ({id, isOpen, inert, onClose}: MenuProps) => {
     // список оновлюється сам: мутації інвалідовують кеш подорожей
     const {data, isPending} = useTrips()
     const trips = data ? flattenTrips(data) : []
 
     return (
-        <div className='trip-menu'>
-            <Link to='/trips' className='trip-menu__logo' aria-label='Мої подорожі'/>
+        <nav
+            id={id}
+            className={isOpen ? 'trip-menu trip-menu--open' : 'trip-menu'}
+            aria-label='Головне меню'
+            inert={inert}
+        >
+            <div className='trip-menu__head'>
+                <Link to='/trips' className='trip-menu__logo' aria-label='Мої подорожі'/>
+                <button type='button' className='trip-menu__close' aria-label='Закрити меню' onClick={onClose}>
+                    <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor'
+                         strokeWidth='1.8' strokeLinecap='round' aria-hidden='true'>
+                        <path d='M6 6l12 12M18 6L6 18'/>
+                    </svg>
+                </button>
+            </div>
             <div className='trip-menu__nav'>
                 <NavLink to='/trips' end className={navLinkClass}>
                     <div className='trip-menu__link-logo-1'></div>
@@ -44,6 +65,6 @@ export const Menu = () => {
                 </div>
             </div>
             <MenuUser/>
-        </div>
+        </nav>
     )
 }

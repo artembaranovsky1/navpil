@@ -1,7 +1,97 @@
+@use '../../styles/color' as *;
+
+// як MOBILE_QUERY в AppLayout.tsx
+$mobile: 900px;
+
 .app-layout {
   display: flex;
 }
 
+.app-layout__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .app-layout__content {
   flex: 1;
+  min-width: 0;
+}
+
+.app-layout__backdrop {
+  display: none;
+
+  @media (max-width: $mobile) {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    background: rgba($ink, 0.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+
+    &--visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+}
+
+// мобільна шапка: на сторінках подорожі — TripTopbar, на решті — логотип і профіль
+.app-layout__header {
+  display: none;
+
+  @media (max-width: $mobile) {
+    padding: calc(26px + env(safe-area-inset-top)) 24px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.app-layout__back {
+  height: 44px;
+  margin-left: -4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: $ink;
+  text-decoration: none;
+}
+
+.app-layout__wordmark {
+  color: $ink;
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+}
+
+.app-layout__wordmark-slash {
+  color: $green;
+}
+
+.app-layout__profile {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 22px;
+  background: $ink;
+  color: $surface;
+  font-family: 'Geologica', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    background: $ink-hover;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px $background, 0 0 0 4px $green;
+  }
 }

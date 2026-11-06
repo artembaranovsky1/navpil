@@ -27,6 +27,11 @@ export const notFoundResponse = (description: string) => ({
     ...jsonContent(errorResponseSchema),
 });
 
+export const errorResponse = (description: string) => ({
+    description,
+    ...jsonContent(errorResponseSchema),
+});
+
 export const validationFailedResponse = {
     description: 'Validation failed',
     ...jsonContent(validationErrorResponseSchema),

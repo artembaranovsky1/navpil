@@ -1,5 +1,5 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
-import { colors } from '@/color';
+import {Pressable, StyleSheet, Text} from 'react-native';
+import {colors, fonts} from '@/color';
 
 type Props = {
     label: string;
@@ -8,11 +8,14 @@ type Props = {
     disabled: boolean;
 }
 
+// як .new-expense__chip на фронті: обраний — зелений
 export function Chip({label, selected, onPress, disabled}: Props) {
     return (
         <Pressable
             onPress={onPress}
             disabled={disabled}
+            accessibilityRole="radio"
+            accessibilityState={{selected, disabled}}
             style={({pressed}) => [
                 styles.chip,
                 selected && styles.chipSelected,
@@ -26,7 +29,7 @@ export function Chip({label, selected, onPress, disabled}: Props) {
 
 const styles = StyleSheet.create({
     chip: {
-        paddingHorizontal: 16,
+        paddingHorizontal: 14,
         height: 40,
         borderRadius: 20,
         borderWidth: 1,
@@ -35,9 +38,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     chipSelected: {
-        backgroundColor: colors.text,
-        borderColor: colors.text,
+        backgroundColor: colors.accent,
+        borderColor: colors.accent,
     },
-    text: { fontSize: 15, color: colors.text },
-    textSelected: { color: colors.surface },
+    text: {fontSize: 14, color: colors.text, fontFamily: fonts.regular},
+    textSelected: {color: colors.surface, fontFamily: fonts.medium},
 });

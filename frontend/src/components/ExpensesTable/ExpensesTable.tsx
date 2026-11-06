@@ -4,6 +4,7 @@ import {Link, useNavigate} from "react-router";
 import type {ExpenseResponse} from "../../api/expense.ts";
 import {CategoryIcon} from "../CategoryIcon/CategoryIcon.tsx";
 import type {TripMember} from "../../api/trips.ts";
+import {formatLongDate} from "../../utils/format.ts";
 
 type ExpensesTableProps = {
     tripId: string;
@@ -35,6 +36,31 @@ const getSplitLabel = (members: TripMember[], splitBetween: string[]): string =>
     }
 
     return splitBetween.map((id) => getMemberName(members, id)).join(', ');
+};
+
+// "на трьох" — коли ділимо між усіма
+const SPLIT_COUNT_LABELS = ['', 'на одного', 'на двох', 'на трьох', 'на чотирьох', 'на п’ятьох', 'на шістьох', 'на сімох', 'на вісьмох', 'на дев’ятьох', 'на десятьох'];
+
+const getMobileSplitLabel = (members: TripMember[], splitBetween: string[]): string => {
+    if (splitBetween.length === 0 || splitBetween.length === members.length) {
+        return SPLIT_COUNT_LABELS[members.length] ?? 'на всіх';
+    }
+
+    return splitBetween.map((id) => getMemberName(members, id)).join(', ');
+};
+
+const toDateKey = (date: Date): string =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+// "сьогодні", "вчора", "12 травня"
+const formatRelativeDate = (date: string): string => {
+    const day = date.slice(0, 10);
+    const today = new Date();
+    const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+
+    if (day === toDateKey(today)) return 'сьогодні';
+    if (day === toDateKey(yesterday)) return 'вчора';
+    return formatLongDate(day);
 };
 
 export const ExpensesTable = ({tripId, expenses, members, currentUserId, onSelect}: ExpensesTableProps) => {
@@ -90,6 +116,48 @@ export const ExpensesTable = ({tripId, expenses, members, currentUserId, onSelec
                     </span>
                 </div>
             </div>
+
+            {/* на мобільному замість таблиці — список */}
+            <ul className="expenses-table__list">
+                {visibleExpenses.map((expense) => {
+                    const payerId = expense.paidById ?? expense.addedById;
+                    const meta = [
+                        getMemberName(members, payerId),
+                        getMobileSplitLabel(members, expense.splitBetween),
+                        formatRelativeDate(expense.date ?? expense.createdAt),
+                    ].join(' · ');
+
+                    const content = (
+                        <>
+                            <CategoryIcon category={expense.category} size="list"/>
+                            <span className="expenses-table__list-text">
+                                <span className="expenses-table__list-name">{expense.name}</span>
+                                <span className="expenses-table__list-meta">{meta}</span>
+                            </span>
+                            <span className="expenses-table__list-amount">{formatAmount(expense.amount)}</span>
+                        </>
+                    );
+
+                    return (
+                        <li key={expense.id} className="expenses-table__list-item">
+                            {onSelect ? (
+                                <button type="button" className="expenses-table__list-row" onClick={() => onSelect(expense)}>
+                                    {content}
+                                </button>
+                            ) : (
+                                <Link to={`/trips/${tripId}/expenses/${expense.id}`} className="expenses-table__list-row">
+                                    {content}
+                                </Link>
+                            )}
+                        </li>
+                    );
+                })}
+                {visibleExpenses.length === 0 && (
+                    <li className="expenses-table__list-empty">
+                        {expenses.length === 0 ? 'Витрат поки немає' : 'Нічого не знайдено'}
+                    </li>
+                )}
+            </ul>
 
             <div className="expenses-table__scroll">
                 <table className="expenses-table__table">

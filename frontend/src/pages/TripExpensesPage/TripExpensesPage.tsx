@@ -42,14 +42,17 @@ export const TripExpensesPage = () => {
                 trip={trip}
                 onAddExpense={() => setIsNewExpenseOpen(true)}
                 actions={<MemberAvatars tripId={tripId} members={trip.members} currentUserId={currentUserId}/>}
+                mobileSummary={<CategoryChart expenses={expenses} compact/>}
             />
 
-            <ExpenseSummary
-                trip={trip}
-                expenses={expenses}
-                payments={payments}
-                currentUserId={currentUserId}
-            />
+            <div className="trip-expenses-page__desktop-only">
+                <ExpenseSummary
+                    trip={trip}
+                    expenses={expenses}
+                    payments={payments}
+                    currentUserId={currentUserId}
+                />
+            </div>
 
             <div className="trip-expenses-page__columns">
                 <div className="trip-expenses-page__main">
@@ -60,10 +63,12 @@ export const TripExpensesPage = () => {
                         currentUserId={currentUserId}
                         onSelect={(expense) => setSelectedExpenseId(expense.id)}
                     />
-                    <DailyChart trip={trip} expenses={expenses}/>
+                    <div className="trip-expenses-page__desktop-only">
+                        <DailyChart trip={trip} expenses={expenses}/>
+                    </div>
                 </div>
 
-                <div className="trip-expenses-page__aside">
+                <div className="trip-expenses-page__aside trip-expenses-page__desktop-only">
                     <CategoryChart expenses={expenses}/>
                     <PaidByMembers members={trip.members} balances={balances}/>
                     <SettleLink tripId={tripId} transfersCount={transfers.length}/>

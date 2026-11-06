@@ -5,7 +5,7 @@ import {CATEGORY_COLORS} from "../../utils/colors.ts";
 
 type CategoryIconProps = {
     category: ExpenseCategory;
-    size?: 'md' | 'lg';
+    size?: 'md' | 'list' | 'lg';
 }
 
 const CATEGORY_ICONS: Record<ExpenseCategory, string> = {
@@ -17,7 +17,7 @@ const CATEGORY_ICONS: Record<ExpenseCategory, string> = {
     other: 'M5 12h.01M12 12h.01M19 12h.01',
 };
 
-const ICON_SIZES = {md: 16, lg: 24};
+const ICON_SIZES = {md: 16, list: 18, lg: 24};
 
 export const CategoryIcon = ({category, size = 'md'}: CategoryIconProps) => (
     <span

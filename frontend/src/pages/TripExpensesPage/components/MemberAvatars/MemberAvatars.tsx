@@ -7,27 +7,30 @@ type MemberAvatarsProps = {
     tripId: string;
     members: TripMember[];
     currentUserId?: string;
+    // мобільна шапка: дрібніші, поточний юзер чорним, решта сірі
+    compact?: boolean;
 }
 
-const MAX_VISIBLE = 4;
-
-export const MemberAvatars = ({tripId, members, currentUserId}: MemberAvatarsProps) => {
+export const MemberAvatars = ({tripId, members, currentUserId, compact = false}: MemberAvatarsProps) => {
+    const maxVisible = compact ? 3 : 4;
     // поточний користувач — першим
     const sorted = [...members].sort((a, b) => Number(b.id === currentUserId) - Number(a.id === currentUserId));
-    const visible = sorted.slice(0, MAX_VISIBLE);
+    const visible = sorted.slice(0, maxVisible);
     const hiddenCount = sorted.length - visible.length;
 
     return (
         <Link
             to={`/trips/${tripId}/members`}
-            className="member-avatars"
+            className={compact ? 'member-avatars member-avatars--compact' : 'member-avatars'}
             aria-label={`Учасники: ${members.map((member) => member.name).join(', ')}`}
         >
             {visible.map((member) => (
                 <span
                     key={member.id}
-                    className='member-avatars__item member-avatars__item--colored'
-                    style={{background: getAvatarColor(member.id)}}
+                    className={compact
+                        ? member.id === currentUserId ? 'member-avatars__item member-avatars__item--me' : 'member-avatars__item'
+                        : 'member-avatars__item member-avatars__item--colored'}
+                    style={compact ? undefined : {background: getAvatarColor(member.id)}}
                     aria-hidden="true"
                 >
                     {member.name.trim().charAt(0).toUpperCase()}

@@ -25,6 +25,18 @@ usersRegistry.registerPath({
 
 usersRegistry.registerPath({
     method: 'get',
+    path: '/users/me',
+    operationId: 'getMe',
+    summary: 'Get the current user',
+    tags: [TAG],
+    responses: {
+        200: {description: 'Current user', ...jsonContent(userResponseSchema)},
+        404: notFoundResponse('User not found'),
+    },
+});
+
+usersRegistry.registerPath({
+    method: 'get',
     path: '/users/{userId}',
     operationId: 'getUser',
     summary: 'Get a user by ID',

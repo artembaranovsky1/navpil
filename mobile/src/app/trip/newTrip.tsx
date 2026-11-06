@@ -1,209 +1,166 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { DateField } from '@/components/date-field';
-import { ApiError } from '@/api/ApiError';
-import { colors } from '@/color';
-import { useCreateTrip } from '@/hooks/mutations';
-import {Ionicons} from "@expo/vector-icons";
-
-const getErrorMessage = (error: unknown) => {
-    if (!error) return '';
-    if (error instanceof ApiError && error.status === 422) return 'Перевірте поля форми';
-    if (error instanceof ApiError) return 'Не вдалося створити подорож, спробуйте ще раз';
-    return 'Немає з’єднання з сервером';
-};
+import {KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {useState} from 'react';
+import {router} from 'expo-router';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {DateField} from '@/components/date-field';
+import {ApiError} from '@/api/ApiError';
+import {colors, fonts} from '@/color';
+import {useCreateTrip} from '@/hooks/mutations';
+import {FieldErrors} from '@/utils/expenseValidation';
+import {TRIP_DESCRIPTION_MAX, TRIP_NAME_MAX, validateTrip} from '@/utils/tripValidation';
+import {BackLink} from '@/components/ui/back-link';
+import {Button} from '@/components/ui/button';
+import {Icon} from '@/components/ui/icon';
+import {TextField} from '@/components/ui/text-field';
+import {formCardStyles} from '@/components/form-card-styles';
 
 export default function NewTripScreen() {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
-    const [formError, setFormError] = useState('');
-    const [focused, setFocused] = useState<'name' | 'description' | null>(null);
+    const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
-    const { mutate, isPending, error } = useCreateTrip();
+    // після створення useCreateTrip сам відкриває подорож
+    const {mutateAsync, isPending} = useCreateTrip();
 
-    const errorMessage = formError || getErrorMessage(error);
-
-    const handleSubmit = () => {
-        if (!name.trim()) {
-            setFormError('Вкажіть назву подорожі');
-            return;
-        }
-
-        setFormError('');
-        mutate({
-            name: name.trim(),
-            description: description.trim() || undefined,
-            startDate: startDate || undefined,
-            endDate: endDate || undefined,
+    // прибираємо помилку поля, щойно юзер його змінив
+    const clearFieldError = (...fields: string[]) => {
+        setFieldErrors((prev) => {
+            if (!fields.some((field) => prev[field])) return prev;
+            const next = {...prev};
+            fields.forEach((field) => delete next[field]);
+            return next;
         });
+    };
+
+    const handleSubmit = async () => {
+        setError('');
+
+        const errors = validateTrip({name, description, startDate, endDate});
+        setFieldErrors(errors);
+        if (Object.keys(errors).length > 0) return;
+
+        try {
+            await mutateAsync({
+                name: name.trim(),
+                description: description.trim() || undefined,
+                startDate: startDate || undefined,
+                endDate: endDate || undefined,
+            });
+        } catch (err) {
+            if (err instanceof ApiError && err.status === 422) {
+                setFieldErrors((err.details ?? {}) as FieldErrors);
+            } else if (err instanceof ApiError) {
+                setError('Не вдалося створити подорож, спробуйте ще раз');
+            } else {
+                setError('Немає з’єднання з сервером');
+            }
+        }
     };
 
     return (
         <SafeAreaView style={styles.container}>
-            <Text style={styles.title}>Нова подорож</Text>
+            <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+                <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+                    <BackLink/>
 
-            <View style={styles.field}>
-                <Text style={styles.label}>Назва</Text>
+                    <View style={styles.card}>
+                        <View style={styles.icon}>
+                            <Icon name="home" size={22}/>
+                        </View>
+                        <Text style={styles.title}>Нова подорож</Text>
+                        <Text style={styles.subtitle}>
+                            Після створення отримаєш код, щоб запросити друзів і разом вести витрати.
+                        </Text>
 
-                <TextInput
-                    style={[styles.input, focused === 'name' && styles.inputFocused]}
-                    value={name}
-                    onChangeText={setName}
-                    onFocus={() => setFocused('name')}
-                    onBlur={() => setFocused(null)}
-                    placeholder="Сухаріки Flint"
-                    placeholderTextColor={colors.muted}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    autoComplete="name"
-                    returnKeyType="next"
-                    editable={!isPending}
-                />
-            </View>
+                        <View style={styles.form}>
+                            <TextField
+                                label="Назва"
+                                value={name}
+                                onChangeText={(value) => {
+                                    setName(value);
+                                    clearFieldError('name');
+                                }}
+                                error={fieldErrors.name?.[0]}
+                                placeholder="Наприклад, Карпати"
+                                maxLength={TRIP_NAME_MAX}
+                                autoCapitalize="sentences"
+                                editable={!isPending}
+                            />
 
-            <View style={styles.field}>
-                <Text style={styles.label}>Опис</Text>
-                <TextInput
-                    style={[styles.input, focused === 'description' && styles.inputFocused]}
-                    value={description}
-                    onChangeText={setDescription}
-                    onFocus={() => setFocused('description')}
-                    onBlur={() => setFocused(null)}
-                    placeholder="Смак сметака та зелень"
-                    placeholderTextColor={colors.muted}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    returnKeyType="next"
-                    editable={!isPending}
-                />
-            </View>
+                            <View style={styles.field}>
+                                <TextField
+                                    label={<>Опис <Text style={styles.optional}>· необов’язково</Text></>}
+                                    value={description}
+                                    onChangeText={(value) => {
+                                        setDescription(value);
+                                        clearFieldError('description');
+                                    }}
+                                    error={fieldErrors.description?.[0]}
+                                    placeholder="Куди їдемо і з ким"
+                                    maxLength={TRIP_DESCRIPTION_MAX}
+                                    autoCapitalize="sentences"
+                                    multiline
+                                    editable={!isPending}
+                                />
+                                <Text style={styles.counter}>{description.length}/{TRIP_DESCRIPTION_MAX}</Text>
+                            </View>
 
+                            <View style={styles.field}>
+                                <DateField
+                                    label="Початок"
+                                    value={startDate}
+                                    onChange={(value) => {
+                                        setStartDate(value);
+                                        clearFieldError('startDate', 'endDate');
+                                    }}
+                                    disabled={isPending}
+                                />
+                                {fieldErrors.startDate ? <Text style={styles.error}>{fieldErrors.startDate[0]}</Text> : null}
+                            </View>
 
-            <DateField label="Початок" value={startDate} onChange={setStartDate}/>
-            <DateField
-                label="Кінець"
-                value={endDate}
-                onChange={setEndDate}
-                minimumDate={startDate || undefined}
-            />
+                            <View style={styles.field}>
+                                <DateField
+                                    label="Кінець"
+                                    value={endDate}
+                                    onChange={(value) => {
+                                        setEndDate(value);
+                                        clearFieldError('endDate');
+                                    }}
+                                    minimumDate={startDate || undefined}
+                                    disabled={isPending}
+                                />
+                                {fieldErrors.endDate ? <Text style={styles.error}>{fieldErrors.endDate[0]}</Text> : null}
+                            </View>
+                            <Text style={styles.hint}>Дати можна не вказувати — додаси пізніше.</Text>
 
-            {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
+                            {error ? <Text style={styles.formError}>{error}</Text> : null}
 
-            <Pressable
-                style={({pressed}) => [styles.primaryButton, pressed && {opacity: 0.85}]}
-                onPress={() => handleSubmit()}
-            >
-                <Ionicons name="add" size={20} color="#FFFFFF"/>
-                <Text style={styles.primaryButtonText}>Нова подорож</Text>
-            </Pressable>
-
+                            <View style={styles.actions}>
+                                <Button size="lg" onPress={handleSubmit} loading={isPending}>
+                                    Створити подорож
+                                </Button>
+                                <Pressable onPress={() => router.back()} hitSlop={8}>
+                                    <Text style={styles.cancel}>Скасувати</Text>
+                                </Pressable>
+                            </View>
+                        </View>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     )
 }
 
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.background,
-    },
-    content: {
-        flex: 1,
-        justifyContent: 'center',
-        paddingHorizontal: 24,
-        gap: 20,
-    },
-    center: {flex: 1, alignItems: 'center', justifyContent: 'center'},
-    logo: {
-        fontSize: 22,
-        fontWeight: '700',
-        color: colors.accent,
-    },
-    title: {
-        fontSize: 30,
-        fontWeight: '600',
-        color: '#111111',
-        letterSpacing: -0.5,
-    },
-    subtitle: {
-        fontSize: 15,
-        color: colors.muted,
-        marginTop: -12,
-    },
-    field: {
-        gap: 6,
-    },
-    label: {
-        fontSize: 14,
-        color: colors.muted,
-    },
-    input: {
-        height: 52,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: 14,
-        paddingHorizontal: 16,
-        fontSize: 16,
-        color: colors.text,
-        backgroundColor: colors.surface,
-    },
-    inputFocused: {
-        borderColor: colors.text,
-    },
-    error: {
-        color: colors.error,
-        fontSize: 14,
-    },
-    muted: {fontSize: 14, color: '#6B6B66'},
-    button: {
-        height: 52,
-        borderRadius: 26,
-        backgroundColor: colors.text,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 4,
-    },
-    buttonPressed: {
-        opacity: 0.85,
-    },
-    buttonDisabled: {
-        opacity: 0.5,
-    },
-    buttonText: {
-        color: colors.surface,
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    footer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 4,
-    },
-    footerText: {
-        fontSize: 14,
-        color: colors.muted,
-    },
-    link: {
-        fontSize: 14,
-        color: colors.text,
-        fontWeight: '600',
-        textDecorationLine: 'underline',
-    },
-    primaryButton: {
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: '#111111',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8
-    },
-    primaryButtonText: {
-        color: 'white',
-        fontSize: 15,
-        fontWeight: '500',
-    }
-});
+const styles = {
+    ...formCardStyles,
+    ...StyleSheet.create({
+        form: {marginTop: 28, gap: 18},
+        field: {gap: 6},
+        optional: {color: colors.muted},
+        counter: {alignSelf: 'flex-end', fontSize: 12, color: colors.faint, fontFamily: fonts.regular},
+        hint: {marginTop: -8, fontSize: 12, color: colors.muted, fontFamily: fonts.regular},
+    }),
+};

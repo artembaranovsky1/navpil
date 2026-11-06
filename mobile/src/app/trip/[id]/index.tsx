@@ -1,184 +1,146 @@
-import {ActivityIndicator, Pressable, StyleSheet, Text, View} from 'react-native';
+import {Pressable, RefreshControl, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {router, useLocalSearchParams} from "expo-router";
-import {colors} from "@/color";
-import {formatMoney, formatSignedMoney, formatTripDates} from "@/context/format";
-import {calculateSettlement, countTripDays, totalAmount} from "@/utils/settle";
-import {useExpenses, useMe, usePayments, useTrip} from "@/hooks/queries";
 import {SafeAreaView} from "react-native-safe-area-context";
+import {colors, fonts} from "@/color";
+import {formatLongDate} from "@/context/format";
+import {useExpenses, useMe, usePayments, useTrip} from "@/hooks/queries";
+import {ExpenseResponse} from "@/api/expense";
+import {TripMember} from "@/api/trips";
+import {getMemberName} from "@/utils/settle";
+import {AddExpenseFab, TripHeader, TripTopbar} from "@/components/trip-header";
+import {CategoryChart} from "@/components/category-chart";
+import {CategoryIcon} from "@/components/ui/category-icon";
+import {ScreenState} from "@/components/ui/screen-state";
+
+// "на трьох" — коли ділимо між усіма
+const SPLIT_COUNT_LABELS = ['', 'на одного', 'на двох', 'на трьох', 'на чотирьох', 'на п’ятьох', 'на шістьох', 'на сімох', 'на вісьмох', 'на дев’ятьох', 'на десятьох'];
+
+const getSplitLabel = (members: TripMember[], splitBetween: string[]): string => {
+    if (splitBetween.length === 0 || splitBetween.length === members.length) {
+        return SPLIT_COUNT_LABELS[members.length] ?? 'на всіх';
+    }
+
+    return splitBetween.map((id) => getMemberName(members, id)).join(', ');
+};
+
+const toDateKey = (date: Date): string =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+// "сьогодні", "вчора", "12 травня"
+const formatRelativeDate = (date: string): string => {
+    const day = date.slice(0, 10);
+    const today = new Date();
+    const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+
+    if (day === toDateKey(today)) return 'сьогодні';
+    if (day === toDateKey(yesterday)) return 'вчора';
+    return formatLongDate(day);
+};
+
+const formatAmount = (amount: number): string =>
+    amount.toLocaleString('uk-UA', {maximumFractionDigits: 2});
 
 export default function TripScreen() {
-    const { id: tripId } = useLocalSearchParams<{ id: string }>();
-    const { data: me } = useMe();
-    const { data: trip, isLoading: isTripLoading, error: tripError } = useTrip(tripId);
-    const { data: expenses = [], isLoading: isExpensesLoading, error: expensesError } = useExpenses(tripId);
-    const { data: payments = [], isLoading: isPaymentsLoading, error: paymentsError } = usePayments(tripId);
+    const {id: tripId} = useLocalSearchParams<{ id: string }>();
+    const meQuery = useMe();
+    const tripQuery = useTrip(tripId);
+    const expensesQuery = useExpenses(tripId);
+    const paymentsQuery = usePayments(tripId);
 
-    if (isTripLoading || isExpensesLoading || isPaymentsLoading) {
-        return (
-            <View style={styles.center}>
-                <ActivityIndicator />
-            </View>
-        );
+    if (tripQuery.isPending || expensesQuery.isPending || paymentsQuery.isPending) {
+        return <ScreenState/>;
     }
 
-    if (tripError || expensesError || paymentsError || !trip) {
-        return (
-            <View style={styles.center}>
-                <Text style={styles.muted}>Не вдалося завантажити подорож</Text>
-            </View>
-        );
+    if (tripQuery.isError || expensesQuery.isError || paymentsQuery.isError) {
+        return <ScreenState error="Не вдалося завантажити витрати"/>;
     }
 
-    const dates = formatTripDates(trip.startDate, trip.endDate);
-    const { balances, remaining } = calculateSettlement(trip.members, expenses, payments);
+    const trip = tripQuery.data;
+    const expenses = expensesQuery.data;
+    const currentUserId = meQuery.data?.id;
 
-    const total = totalAmount(expenses);
-    const myRemaining = me?.id ? remaining[me.id] ?? 0 : 0;
-    const myShare = balances.find((b) => b.id === me?.id)?.share ?? 0;
-    const days = countTripDays(trip);
-    const perDay = days > 0 ? total / days : 0;
+    const refresh = () => {
+        tripQuery.refetch();
+        expensesQuery.refetch();
+        paymentsQuery.refetch();
+    };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.container}>
-                <Text style={styles.muted}>{trip.name} · {dates && `${dates}`} {trip.inviteCode}</Text>
-                <Text style={styles.title}>{formatMoney(total)} ₴</Text>
-                <Text style={styles.muted}>твій баланс {formatSignedMoney(myRemaining)} ₴</Text>
+        <SafeAreaView style={styles.container} edges={['top']}>
+            <TripTopbar trip={trip} currentUserId={currentUserId}/>
 
-
-                {expenses.map((expense) => (
-                    <Pressable key={expense.id} onPress={() => router.push(`/trip/${tripId}/expenses/${expense.id}`)}>
-                        <Text style={styles.muted}>{expense.name} {expense.amount} ₴</Text>
-                    </Pressable>
-                ))}
-            </View>
-
-            <Pressable
-                style={({pressed}) => [styles.button, pressed && {opacity: 0.85}]}
-                onPress={() => router.push(`/trip/${tripId}/member`)}
+            <ScrollView
+                contentContainerStyle={styles.content}
+                refreshControl={<RefreshControl refreshing={expensesQuery.isRefetching} onRefresh={refresh}/>}
             >
-                <Text style={styles.buttonText}>Учасники</Text>
-            </Pressable>
+                <TripHeader
+                    trip={trip}
+                    expenses={expenses}
+                    payments={paymentsQuery.data}
+                    currentUserId={currentUserId}
+                    active="expenses"
+                    summary={<CategoryChart expenses={expenses}/>}
+                />
 
-            <Pressable
-                style={({pressed}) => [styles.button, pressed && {opacity: 0.85}]}
-                onPress={() => router.push(`/trip/${tripId}/settle`)}
-            >
-                <Text style={styles.buttonText}>Розрахунок</Text>
-            </Pressable>
+                <View>
+                    {expenses.map((expense, index) => (
+                        <ExpenseRow
+                            key={expense.id}
+                            expense={expense}
+                            members={trip.members}
+                            isLast={index === expenses.length - 1}
+                            onPress={() => router.push(`/trip/${tripId}/expenses/${expense.id}`)}
+                        />
+                    ))}
+                    {expenses.length === 0 && <Text style={styles.empty}>Витрат поки немає</Text>}
+                </View>
+            </ScrollView>
 
-
-            <Pressable
-                style={({pressed}) => [styles.button, pressed && {opacity: 0.85}]}
-                onPress={() => router.push(`/trip/${tripId}/expenses/new`)}
-            >
-                <Text style={styles.buttonText}>Додати нову витрату</Text>
-            </Pressable>
-
+            <AddExpenseFab tripId={tripId}/>
         </SafeAreaView>
     )
 }
 
+type ExpenseRowProps = {
+    expense: ExpenseResponse;
+    members: TripMember[];
+    isLast: boolean;
+    onPress: () => void;
+}
+
+function ExpenseRow({expense, members, isLast, onPress}: ExpenseRowProps) {
+    const payerId = expense.paidById ?? expense.addedById;
+    const meta = [
+        getMemberName(members, payerId),
+        getSplitLabel(members, expense.splitBetween),
+        formatRelativeDate(expense.date ?? expense.createdAt),
+    ].join(' · ');
+
+    return (
+        <Pressable
+            onPress={onPress}
+            style={({pressed}) => [styles.row, !isLast && styles.rowDivider, pressed && {opacity: 0.6}]}
+        >
+            <CategoryIcon category={expense.category} size="list"/>
+            <View style={styles.rowText}>
+                <Text style={styles.rowName} numberOfLines={1}>{expense.name}</Text>
+                <Text style={styles.rowMeta} numberOfLines={1}>{meta}</Text>
+            </View>
+            <Text style={styles.rowAmount}>{formatAmount(expense.amount)}</Text>
+        </Pressable>
+    );
+}
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.background,
-    },
-    content: {
-        flex: 1,
-        justifyContent: 'center',
-        paddingHorizontal: 24,
-        gap: 20,
-    },
-    center: {flex: 1, alignItems: 'center', justifyContent: 'center'},
-    logo: {
-        fontSize: 22,
-        fontWeight: '700',
-        color: colors.accent,
-    },
-    title: {
-        fontSize: 30,
-        fontWeight: '600',
-        color: '#111111',
-        letterSpacing: -0.5,
-    },
-    subtitle: {
-        fontSize: 15,
-        color: colors.muted,
-        marginTop: -12,
-    },
-    field: {
-        gap: 6,
-    },
-    label: {
-        fontSize: 14,
-        color: colors.muted,
-    },
-    input: {
-        height: 52,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: 14,
-        paddingHorizontal: 16,
-        fontSize: 16,
-        color: colors.text,
-        backgroundColor: colors.surface,
-    },
-    inputFocused: {
-        borderColor: colors.text,
-    },
-    error: {
-        color: colors.error,
-        fontSize: 14,
-    },
-    muted: {fontSize: 14, color: '#6B6B66'},
-    button: {
-        height: 52,
-        borderRadius: 26,
-        backgroundColor: colors.text,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 4,
-    },
-    buttonPressed: {
-        opacity: 0.85,
-    },
-    buttonDisabled: {
-        opacity: 0.5,
-    },
-    buttonText: {
-        color: colors.surface,
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    footer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 4,
-    },
-    footerText: {
-        fontSize: 14,
-        color: colors.muted,
-    },
-    link: {
-        fontSize: 14,
-        color: colors.text,
-        fontWeight: '600',
-        textDecorationLine: 'underline',
-    },
-    primaryButton: {
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: '#111111',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8
-    },
-    primaryButtonText: {
-        color: 'white',
-        fontSize: 15,
-        fontWeight: '500',
-    }
+    container: {flex: 1, backgroundColor: colors.background},
+    // місце під кнопку «+» внизу
+    content: {paddingHorizontal: 24, paddingTop: 24, paddingBottom: 112, gap: 24},
+
+    row: {paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 14},
+    rowDivider: {borderBottomWidth: 1, borderBottomColor: colors.rowDivider},
+    rowText: {flex: 1, minWidth: 0},
+    rowName: {fontSize: 15, color: colors.text, fontFamily: fonts.medium},
+    rowMeta: {marginTop: 2, fontSize: 12, color: colors.muted, fontFamily: fonts.regular},
+    rowAmount: {fontSize: 15, color: colors.text, fontFamily: fonts.medium},
+    empty: {paddingVertical: 24, textAlign: 'center', fontSize: 14, color: colors.muted, fontFamily: fonts.regular},
 });

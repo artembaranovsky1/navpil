@@ -1,15 +1,18 @@
 import {NativeTabs} from 'expo-router/unstable-native-tabs';
-import {useColorScheme} from 'react-native';
 
-import {Colors} from '@/constants/theme';
+import {colors, fonts} from '@/color';
 
 export default function AppTabs() {
-    const scheme = useColorScheme();
-    const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
-
     return (
 
-        <NativeTabs>
+        <NativeTabs
+            tintColor={colors.text}
+            iconColor={{default: colors.muted, selected: colors.text}}
+            labelStyle={{
+                default: {color: colors.muted, fontFamily: fonts.regular},
+                selected: {color: colors.text, fontFamily: fonts.medium},
+            }}
+        >
             <NativeTabs.Trigger name="trips">
                 <NativeTabs.Trigger.Label>Подорожі</NativeTabs.Trigger.Label>
                 <NativeTabs.Trigger.Icon src={require('@/assets/images/tabIcons/home.png')} renderingMode="template" />

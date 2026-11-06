@@ -1,9 +1,8 @@
-import {DarkTheme, DefaultTheme, ThemeProvider, Stack} from 'expo-router';
+import {DefaultTheme, ThemeProvider, Stack} from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import {QueryCache, QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {notifyUnauthorized} from '@/api/auth-events'
 import {useEffect} from 'react';
-import {useColorScheme} from 'react-native';
 import {
     useFonts, Geologica_300Light, Geologica_400Regular,
     Geologica_500Medium, Geologica_600SemiBold, Geologica_700Bold
@@ -12,9 +11,16 @@ import {
 import {AuthProvider, useAuth} from '@/context/auth';
 import {ApiError} from "@/api/ApiError";
 import {MutationCache} from "@tanstack/query-core";
+import {colors} from "@/color";
 
 
 SplashScreen.preventAutoHideAsync();
+
+// дизайн лише світлий, як на фронті
+const theme = {
+    ...DefaultTheme,
+    colors: {...DefaultTheme.colors, background: colors.background, card: colors.surface, text: colors.text, border: colors.divider, primary: colors.accent},
+};
 
 const isUnauthorized = (err: unknown) => err instanceof ApiError && err.status === 401;
 
@@ -57,7 +63,7 @@ function RootNavigator() {
     if (!isReady) return null;
 
     return (
-        <Stack screenOptions={{headerShown: false}}>
+        <Stack screenOptions={{headerShown: false, contentStyle: {backgroundColor: colors.background}}}>
             <Stack.Screen name="index"/>
 
             <Stack.Protected guard={!!token}>
@@ -74,12 +80,10 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
-    const colorScheme = useColorScheme();
-
     return (
         <QueryClientProvider client={queryClient}>
             <AuthProvider>
-                <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                <ThemeProvider value={theme}>
                     <RootNavigator/>
                 </ThemeProvider>
             </AuthProvider>

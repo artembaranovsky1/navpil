@@ -1,5 +1,5 @@
 import {useQuery} from "@tanstack/react-query";
-import {getTrip, getTrips} from "@/api/trips";
+import {getTrip, getTrips, getTripsSummary} from "@/api/trips";
 import {getExpense, getExpenses} from "@/api/expense";
 import {getPayments} from "@/api/payments";
 import {getMe} from "@/api/user";
@@ -16,6 +16,13 @@ export const useTrips = () =>
     useQuery({
         queryKey: ['trips'],
         queryFn: getTrips,
+    });
+
+// вкладений у trips: інвалідація trips оновлює й підсумки
+export const useTripsSummary = () =>
+    useQuery({
+        queryKey: ['trips', 'summary'],
+        queryFn: getTripsSummary,
     });
 
 export const useTrip = (tripId: string) =>

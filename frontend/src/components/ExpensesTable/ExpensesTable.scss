@@ -1,10 +1,21 @@
 @use '../../styles/color' as *;
 
+// як MOBILE_QUERY в AppLayout.tsx
+$mobile: 900px;
+
 .expenses-table {
   background: $surface;
   border: 1px solid $divider;
   border-radius: 20px;
   padding: 8px 24px 12px;
+
+  // на мобільному — простий список без картки, як у макеті
+  @media (max-width: $mobile) {
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+  }
 }
 
 .expenses-table__header {
@@ -14,6 +25,11 @@
   align-items: center;
   gap: 12px;
   min-height: 60px;
+
+  // пошук і фільтр на мобільному не показуємо — як у макеті
+  @media (max-width: $mobile) {
+    display: none;
+  }
 }
 
 .expenses-table__title {
@@ -74,6 +90,10 @@
 
 .expenses-table__scroll {
   overflow-x: auto;
+
+  @media (max-width: $mobile) {
+    display: none;
+  }
 }
 
 .expenses-table__table {
@@ -179,4 +199,82 @@
 .new-expense__member {
   display: flex;
   justify-content: space-between;
+}
+// ---------- мобільний список
+
+.expenses-table__list {
+  display: none;
+
+  @media (max-width: $mobile) {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.expenses-table__list-item {
+  border-bottom: 1px solid #F0F0EC;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.expenses-table__list-row {
+  width: 100%;
+  padding: 14px 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: none;
+  background: none;
+  color: $ink;
+  font-family: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  &:active {
+    opacity: 0.6;
+  }
+}
+
+.expenses-table__list-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.expenses-table__list-name {
+  font-size: 15px;
+  font-weight: 500;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.expenses-table__list-meta {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #6B6B66;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.expenses-table__list-amount {
+  flex-shrink: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.expenses-table__list-empty {
+  padding: 24px 0;
+  text-align: center;
+  font-size: 14px;
+  color: #6B6B66;
 }

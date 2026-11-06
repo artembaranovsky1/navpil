@@ -2,14 +2,18 @@ import {OpenApiGeneratorV3} from '@asteasolutions/zod-to-openapi';
 import {usersRegistry} from "./users.openapi.js";
 import {roomsRegistry} from "./rooms.openapi.js";
 import {itemsRegistry} from "./items.openapi.js";
+import {authRegistry} from "./auth.openapi.js";
+import {paymentsRegistry} from "./payments.openapi.js";
 
 const PORT = process.env.PORT || 3000;
 
 function generateOpenApiDocument() {
     const generator = new OpenApiGeneratorV3([
+        ...authRegistry.definitions,
         ...usersRegistry.definitions,
         ...roomsRegistry.definitions,
         ...itemsRegistry.definitions,
+        ...paymentsRegistry.definitions,
     ]);
 
     return generator.generateDocument({
@@ -20,10 +24,14 @@ function generateOpenApiDocument() {
             description: 'API for managing users, rooms and the items inside them',
         },
         servers: [{url: `http://localhost:${PORT}`, description: 'Local'}],
+        // усі запити, крім /auth, вимагають токен
+        security: [{bearerAuth: []}],
         tags: [
+            {name: 'Auth', description: 'Registration and login'},
             {name: 'Users', description: 'User management'},
             {name: 'Rooms', description: 'Rooms that group items'},
             {name: 'Items', description: 'Items inside a room'},
+            {name: 'Payments', description: 'Settlements between room members'},
         ],
     });
 }

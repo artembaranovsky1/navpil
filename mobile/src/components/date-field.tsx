@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import {fromApiDate, toApiDate} from "@/api/helper";
+import {colors, fonts} from '@/color';
+import {Icon} from '@/components/ui/icon';
 
 
 
@@ -59,7 +61,7 @@ export function DateField({ label, value, onChange, minimumDate, disabled = fals
 
                 {value && !disabled ? (
                     <Pressable onPress={handleClear} hitSlop={10}>
-                        <Text style={styles.clear}>✕</Text>
+                        <Icon name="close" size={16} color={colors.muted}/>
                     </Pressable>
                 ) : null}
             </Pressable>
@@ -72,7 +74,7 @@ export function DateField({ label, value, onChange, minimumDate, disabled = fals
                     onChange={handleChange}
                     minimumDate={minDate}
                     locale="uk-UA"
-                    accentColor="#0F8A5F"
+                    accentColor={colors.accent}
                 />
             ) : null}
         </View>
@@ -84,36 +86,36 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     label: {
-        fontSize: 14,
-        color: '#6B6B66',
+        fontSize: 13,
+        color: colors.mutedStrong,
+        fontFamily: fonts.regular,
     },
     input: {
         height: 52,
         borderWidth: 1,
-        borderColor: '#E2E2DD',
+        borderColor: colors.border,
         borderRadius: 14,
         paddingHorizontal: 16,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.surface,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
     },
     inputFocused: {
-        borderColor: '#111111',
+        borderColor: colors.text,
     },
     inputDisabled: {
-        opacity: 0.5,
+        backgroundColor: '#F4F4F1',
+        borderColor: colors.divider,
     },
     value: {
         fontSize: 16,
-        color: '#111111',
+        color: colors.text,
+        fontFamily: fonts.regular,
     },
     placeholder: {
         fontSize: 16,
-        color: '#6B6B66',
-    },
-    clear: {
-        fontSize: 16,
-        color: '#6B6B66',
+        color: colors.faint,
+        fontFamily: fonts.regular,
     },
 });

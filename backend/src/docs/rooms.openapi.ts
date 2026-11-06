@@ -1,13 +1,16 @@
 import {OpenAPIRegistry} from '@asteasolutions/zod-to-openapi';
 import * as z from "zod";
 import {
+    joinRoomSchema,
     roomCreateSchema,
+    roomMemberParamsSchema,
     roomParamsSchema,
     roomResponseSchema,
+    roomsGroupedResponseSchema,
     roomsSummaryResponseSchema,
     roomUpdateSchema,
 } from "../validation/room.validation.js";
-import {jsonContent, notFoundResponse, validationFailedResponse} from "./common.openapi.js";
+import {errorResponse, jsonContent, notFoundResponse, validationFailedResponse} from "./common.openapi.js";
 
 export const roomsRegistry = new OpenAPIRegistry();
 
@@ -17,10 +20,10 @@ roomsRegistry.registerPath({
     method: 'get',
     path: '/rooms',
     operationId: 'getRooms',
-    summary: 'List rooms',
+    summary: 'List rooms of the current user, grouped by status',
     tags: [TAG],
     responses: {
-        200: {description: 'List of rooms', ...jsonContent(z.array(roomResponseSchema))},
+        200: {description: 'Rooms grouped by status', ...jsonContent(roomsGroupedResponseSchema)},
     },
 });
 
@@ -62,6 +65,20 @@ roomsRegistry.registerPath({
 });
 
 roomsRegistry.registerPath({
+    method: 'post',
+    path: '/rooms/join',
+    operationId: 'joinRoom',
+    summary: 'Join a room by invite code',
+    tags: [TAG],
+    request: {body: jsonContent(joinRoomSchema)},
+    responses: {
+        200: {description: 'Joined (or already a member)', ...jsonContent(roomResponseSchema)},
+        404: notFoundResponse('Invalid invite code'),
+        422: validationFailedResponse,
+    },
+});
+
+roomsRegistry.registerPath({
     method: 'patch',
     path: '/rooms/{roomId}',
     operationId: 'updateRoom',
@@ -88,5 +105,21 @@ roomsRegistry.registerPath({
     responses: {
         204: {description: 'Room deleted'},
         404: notFoundResponse('Room not found'),
+    },
+});
+
+roomsRegistry.registerPath({
+    method: 'delete',
+    path: '/rooms/{roomId}/members/{userId}',
+    operationId: 'removeMember',
+    summary: 'Remove a member from a room (owner only)',
+    tags: [TAG],
+    request: {params: roomMemberParamsSchema},
+    responses: {
+        204: {description: 'Member removed'},
+        403: errorResponse('Only the owner can remove members'),
+        404: notFoundResponse('Room or member not found'),
+        409: errorResponse('Member has expenses or payments in this trip'),
+        422: errorResponse('Owner cannot remove themselves'),
     },
 });

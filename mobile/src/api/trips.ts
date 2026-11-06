@@ -84,3 +84,25 @@ export const getTrip = async (tripId: string): Promise<TripResponse> => {
     return handleResponse<TripResponse>(response);
 }
 
+
+export type TripSummary = {
+    // скільки витратили всі разом
+    total: number;
+    // скільки ще мають повернути тобі (+) чи маєш віддати ти (−)
+    myBalance: number;
+}
+
+export type TripsSummaryResponse = {
+    myBalance: number;
+    totalSpent: number;
+    tripsThisYear: number;
+    trips: Record<string, TripSummary>;
+}
+
+export const getTripsSummary = async (): Promise<TripsSummaryResponse> => {
+    const response = await fetch(`${API_URL}/rooms/summary`, {
+        headers: await authHeaders(),
+    });
+
+    return handleResponse<TripsSummaryResponse>(response);
+}

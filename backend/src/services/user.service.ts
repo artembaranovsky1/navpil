@@ -47,7 +47,7 @@ export const createJwtToken = (user: User) => {
         },
         JWT_SECRET,
         {
-            expiresIn: 60 * 60
+            expiresIn: 60 * 60 * 24 * 7
         }
     )
 }

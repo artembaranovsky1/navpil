@@ -1,9 +1,21 @@
-import {ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View} from 'react-native';
-import {colors} from "@/color";
-import {SafeAreaView} from "react-native-safe-area-context";
+import {KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {useState} from "react";
+import {router} from "expo-router";
+import {SafeAreaView} from "react-native-safe-area-context";
+import {colors, fonts} from "@/color";
 import {ApiError} from "@/api/ApiError";
 import {useJoinTrip} from "@/hooks/mutations";
+import {BackLink} from "@/components/ui/back-link";
+import {Button} from "@/components/ui/button";
+import {Icon} from "@/components/ui/icon";
+import {TextField} from "@/components/ui/text-field";
+import {formCardStyles} from "@/components/form-card-styles";
+
+const CODE_LENGTH = 6;
+
+// лишаємо тільки латинські літери й цифри: "krp 482" -> "KRP482"
+const normalizeCode = (value: string): string =>
+    value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, CODE_LENGTH);
 
 const getErrorMessage = (error: unknown) => {
     if (!error) return '';
@@ -15,162 +27,93 @@ const getErrorMessage = (error: unknown) => {
 }
 
 export default function JoinScreen() {
-
     const [code, setCode] = useState<string>('');
-    const {mutate, isPending, error} = useJoinTrip()
-
-    const errorMessage = getErrorMessage(error)
-
-    // if (isPending) {
-    //     return (
-    //         <View style={styles.center}>
-    //             <ActivityIndicator/>
-    //         </View>
-    //     );
-    // }
-    //
-    // if (error) {
-    //     return (
-    //         <View style={styles.center}>
-    //             <Text style={styles.muted}>Не вдалося завантажити подорожі</Text>
-    //         </View>
-    //     );
-    // }
-
+    // після входу useJoinTrip сам відкриває подорож
+    const {mutate, isPending, error, reset} = useJoinTrip();
+    const errorMessage = getErrorMessage(error);
 
     return (
         <SafeAreaView style={styles.container}>
-            <Text style={styles.title}>Нова подорож</Text>
+            <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+                <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+                    <BackLink/>
 
-            <View style={styles.field}>
-                <Text style={styles.label}>Назва</Text>
+                    <View style={[styles.card, styles.cardCentered]}>
+                        <View style={[styles.icon, styles.iconLarge]}>
+                            <Icon name="userPlus" size={22}/>
+                        </View>
+                        <Text style={[styles.title, styles.joinTitle]}>Приєднатися до подорожі</Text>
+                        <Text style={[styles.subtitle, styles.centered]}>
+                            Введи код, який тобі надіслав організатор. Після цього побачиш усі витрати й зможеш додавати свої.
+                        </Text>
 
-                <TextInput
-                    style={styles.input}
-                    value={code}
-                    onChangeText={setCode}
-                    placeholder="H5FJO1"
-                    placeholderTextColor={colors.muted}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    returnKeyType="next"
-                    editable={!isPending}
-                />
-            </View>
+                        <View style={styles.codeField}>
+                            <TextField
+                                label="Код запрошення"
+                                value={code}
+                                onChangeText={(value) => {
+                                    setCode(normalizeCode(value));
+                                    reset();
+                                }}
+                                error={errorMessage || undefined}
+                                hint={`${code.length}/${CODE_LENGTH} символів`}
+                                placeholder="ABC123"
+                                maxLength={CODE_LENGTH}
+                                autoCapitalize="characters"
+                                autoCorrect={false}
+                                autoComplete="off"
+                                returnKeyType="go"
+                                onSubmitEditing={() => code.length === CODE_LENGTH && mutate(code)}
+                                editable={!isPending}
+                                autoFocus
+                                inputStyle={styles.codeInput}
+                            />
+                        </View>
 
-            {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
+                        <View style={[styles.actions, styles.joinActions]}>
+                            <Button
+                                size="lg"
+                                onPress={() => mutate(code)}
+                                loading={isPending}
+                                disabled={code.length !== CODE_LENGTH}
+                            >
+                                Приєднатися
+                            </Button>
+                            <Pressable onPress={() => router.back()} hitSlop={8}>
+                                <Text style={styles.cancel}>Скасувати</Text>
+                            </Pressable>
+                        </View>
+                    </View>
 
-            <Pressable
-                onPress={() => mutate(code.trim())}
-                style={({pressed}) => [styles.primaryButton, pressed && {opacity: 0.85}]}
-
-            >
-                <Text style={styles.primaryButtonText}>Приєднатися</Text>
-            </Pressable>
+                    <Text style={styles.alt}>
+                        Немає коду?{' '}
+                        <Text style={styles.altLink} onPress={() => router.replace('/trip/newTrip')}>
+                            Створи свою подорож
+                        </Text>
+                    </Text>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     )
 }
 
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.background,
-    },
-    content: {
-        flex: 1,
-        justifyContent: 'center',
-        paddingHorizontal: 24,
-        gap: 20,
-    },
-    center: {flex: 1, alignItems: 'center', justifyContent: 'center'},
-    logo: {
-        fontSize: 22,
-        fontWeight: '700',
-        color: colors.accent,
-    },
-    title: {
-        fontSize: 30,
-        fontWeight: '600',
-        color: '#111111',
-        letterSpacing: -0.5,
-    },
-    subtitle: {
-        fontSize: 15,
-        color: colors.muted,
-        marginTop: -12,
-    },
-    field: {
-        gap: 6,
-    },
-    label: {
-        fontSize: 14,
-        color: colors.muted,
-    },
-    input: {
-        height: 52,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: 14,
-        paddingHorizontal: 16,
-        fontSize: 16,
-        color: colors.text,
-        backgroundColor: colors.surface,
-    },
-    inputFocused: {
-        borderColor: colors.text,
-    },
-    error: {
-        color: colors.error,
-        fontSize: 14,
-    },
-    muted: {fontSize: 14, color: '#6B6B66'},
-    button: {
-        height: 52,
-        borderRadius: 26,
-        backgroundColor: colors.text,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 4,
-    },
-    buttonPressed: {
-        opacity: 0.85,
-    },
-    buttonDisabled: {
-        opacity: 0.5,
-    },
-    buttonText: {
-        color: colors.surface,
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    footer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 4,
-    },
-    footerText: {
-        fontSize: 14,
-        color: colors.muted,
-    },
-    link: {
-        fontSize: 14,
-        color: colors.text,
-        fontWeight: '600',
-        textDecorationLine: 'underline',
-    },
-    primaryButton: {
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: '#111111',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8
-    },
-    primaryButtonText: {
-        color: 'white',
-        fontSize: 15,
-        fontWeight: '500',
-    }
-});
+const styles = {
+    ...formCardStyles,
+    ...StyleSheet.create({
+        cardCentered: {alignItems: 'center'},
+        iconLarge: {width: 52, height: 52, borderRadius: 16},
+        joinTitle: {fontSize: 28, textAlign: 'center'},
+        centered: {textAlign: 'center'},
+        codeField: {marginTop: 28, alignSelf: 'stretch'},
+        codeInput: {
+            height: 64,
+            fontSize: 28,
+            letterSpacing: 8,
+            textAlign: 'center',
+            fontFamily: fonts.medium,
+        },
+        joinActions: {marginTop: 24, alignSelf: 'stretch'},
+        alt: {textAlign: 'center', fontSize: 14, color: colors.muted, fontFamily: fonts.regular},
+        altLink: {color: colors.text, fontFamily: fonts.medium, textDecorationLine: 'underline'},
+    }),
+};
