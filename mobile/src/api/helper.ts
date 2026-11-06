@@ -1,8 +1,8 @@
-import * as SecureStore from 'expo-secure-store';
+import {tokenStorage} from '@/utils/token-storage';
 import {ApiError} from "@/api/ApiError";
 
 export const authHeaders = async () => {
-    const token = await SecureStore.getItemAsync('token');
+    const token = await tokenStorage.get('token');
     return { Authorization: `Bearer ${token}` };
 };
 
