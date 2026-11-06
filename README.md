@@ -2,10 +2,10 @@
 
 <img src="frontend/public/navpil-logo.png" alt="navpil" width="220" />
 
-### Спільні витрати в подорожі — без таблиць і сварок
+### Shared travel expenses — no spreadsheets, no arguments
 
-Записуйте, хто що оплатив, а navpil порахує, хто кому скільки винен,
-і запропонує **мінімальну кількість переказів**, щоб усі розрахувалися.
+Log who paid for what, and navpil works out who owes whom
+and suggests the **fewest possible transfers** to settle up.
 
 [![React](https://img.shields.io/badge/React_19-20232A?logo=react&logoColor=61DAFB)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
@@ -15,151 +15,161 @@
 [![Prisma](https://img.shields.io/badge/Prisma_7-2D3748?logo=prisma&logoColor=white)](https://www.prisma.io)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)](https://neon.tech)
 
-**[🌐 Веб-застосунок](https://YOUR-APP.vercel.app)** ·
+**[🌐 Web app](https://YOUR-APP.vercel.app)** ·
 **[⚙️ API](https://api-node-navpil.onrender.com)** ·
-**[📖 Swagger-документація](https://api-node-navpil.onrender.com/api-docs)**
+**[📖 Swagger docs](https://api-node-navpil.onrender.com/api-docs)**
 
 </div>
 
 > [!NOTE]
-> API розгорнуто на безкоштовному тарифі Render: після 15 хвилин без запитів сервер «засинає»,
-> тож перше відкриття може тривати до хвилини. Далі все працює швидко.
+> The API runs on Render's free tier: after 15 minutes without requests the server goes to sleep,
+> so the first request may take up to a minute. Everything is fast after that.
 
 ---
 
-## Зміст
+## Contents
 
-- [Можливості](#можливості)
-- [Скріншоти](#скріншоти)
-- [Технології](#технології)
-- [Структура репозиторію](#структура-репозиторію)
-- [Запуск локально](#запуск-локально)
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Tech stack](#tech-stack)
+- [Repository structure](#repository-structure)
+- [Running locally](#running-locally)
 - [API](#api)
-- [Як рахується розрахунок](#як-рахується-розрахунок)
-- [Деплой](#деплой)
+- [How settlement works](#how-settlement-works)
+- [Deployment](#deployment)
 
-## Можливості
+## Features
 
-- **Подорожі.** Створення з назвою, описом і датами; автоматичний статус — *триває*, *скоро* чи *завершена*.
-- **Учасники.** Запрошення друзів за кодом, ролі власника й учасника, видалення учасників.
-- **Витрати.** Сума, категорія, дата, хто платив і між ким ділити. Редагування й видалення.
-- **Аналітика.** Загальна сума подорожі, розподіл за категоріями, витрати по днях, «у середньому на день».
-- **Розрахунок.** Баланс кожного учасника й мінімальний набір переказів; оплачені перекази позначаються одним натиском.
-- **Підсумки.** На головній — скільки витрачено за всі подорожі й ваш загальний баланс.
-- **Авторизація.** Реєстрація та вхід за JWT; сесія автоматично завершується, коли токен спливає.
-- **Два клієнти.** Веб-версія для браузера й мобільний застосунок для iOS та Android на одному API.
+- **Trips.** Create a trip with a name, description and dates; its status — *ongoing*, *upcoming* or *finished* — is set automatically.
+- **Members.** Invite friends with a code, owner and member roles, remove members.
+- **Expenses.** Amount, category, date, who paid and who it's split between. Edit and delete.
+- **Analytics.** Trip total, breakdown by category, spending per day and daily average.
+- **Settlement.** Every member's balance and the minimal set of transfers; mark a transfer as paid with one tap.
+- **Overview.** The home page shows how much you've spent across all trips and your overall balance.
+- **Auth.** Sign up and log in with JWT; the session ends automatically when the token expires.
+- **Two clients.** A web app for the browser and a mobile app for iOS and Android, both on the same API.
 
-## Скріншоти
+## Screenshots
 
-### Веб
+> The UI is in Ukrainian — the app is built for Ukrainian-speaking travellers, and amounts are in hryvnias (₴).
 
-**Мої подорожі.** Поточна поїздка, майбутні й минулі, а зверху — загальний баланс і скільки витрачено за всі подорожі.
+### Web
 
-![Мої подорожі](docs/screenshots/web-trips.png)
+#### Your trips at a glance
 
-**Витрати й аналітика.** Усі витрати подорожі з пошуком і фільтром «мої», розподіл за категоріями та хто скільки заплатив.
+The home page puts the trip that's happening right now front and center — how much the group has spent
+and where you stand. Above it are totals across all your trips: how much you're owed overall,
+how many trips you've taken this year and how much you've spent in total.
+Upcoming trips show a countdown, past ones move to their own section.
 
-![Витрати подорожі](docs/screenshots/web-trip.png)
+![Trips overview](docs/screenshots/web-trips.png)
 
-**Розрахунок.** Баланс кожного учасника й мінімальний набір переказів — 3 замість 12. Оплачені перекази позначаються одним натиском.
+#### Everything about one trip
 
-![Розрахунок](docs/screenshots/web-settle.png)
+Inside a trip you get four key numbers — total spent, your balance, your share and the daily average.
+Below is the full list of expenses with search and an "only mine" filter: each row shows the category,
+who paid and who the cost is split between. On the right, a donut chart breaks spending down
+by category and bars show how much each member has paid so far.
+
+![Trip expenses and analytics](docs/screenshots/web-trip.png)
+
+### Mobile
+
+The mobile app covers the same flow, rebuilt for one-handed use with native navigation.
 
 <table>
   <tr>
-    <td align="center"><img src="docs/screenshots/web-members.png" alt="Учасники" /><br /><sub>Учасники, код запрошення й налаштування подорожі</sub></td>
-    <td align="center"><img src="docs/screenshots/web-new-trip.png" alt="Нова подорож" /><br /><sub>Створення подорожі</sub></td>
+    <td width="50%" align="center">
+      <img src="docs/screenshots/mobile-trip.png" alt="Trip on mobile" width="280" />
+    </td>
+    <td width="50%" align="center">
+      <img src="docs/screenshots/mobile-expense.png" alt="Expense details on mobile" width="280" />
+    </td>
   </tr>
   <tr>
-    <td align="center" colspan="2"><img src="docs/screenshots/web-login.png" alt="Вхід" width="60%" /><br /><sub>Вхід</sub></td>
+    <td valign="top">
+      <b>Trip.</b> The trip total and your balance up top, a category chart, and tabs for
+      expenses, settlement and members. Every expense shows who paid, how it's split and when.
+      The <b>+</b> button adds a new one.
+    </td>
+    <td valign="top">
+      <b>Expense details.</b> A full breakdown of a single expense: the amount, how it's divided
+      (here equally between two people, 5,000 ₴ each) and what it means for each member —
+      who's owed money and who owes. Edit or delete it right here.
+    </td>
   </tr>
 </table>
 
-<!-- TODO: скріншоти мобільного застосунку (docs/screenshots/mobile-*.png) -->
-<!--
-### Мобільний застосунок
+## Tech stack
 
-<p align="center">
-  <img src="docs/screenshots/mobile-trips.png" alt="Подорожі" width="200" />
-  &nbsp;
-  <img src="docs/screenshots/mobile-trip.png" alt="Подорож" width="200" />
-  &nbsp;
-  <img src="docs/screenshots/mobile-add-expense.png" alt="Нова витрата" width="200" />
-  &nbsp;
-  <img src="docs/screenshots/mobile-settle.png" alt="Розрахунок" width="200" />
-</p>
--->
-
-## Технології
-
-| Частина | Стек |
+| Part | Stack |
 |---|---|
-| **Веб** | React 19, TypeScript, Vite 8, React Router, TanStack Query 5, SCSS (BEM), шрифт Geologica |
-| **Мобільний** | Expo SDK 57, React Native 0.86, Expo Router, TanStack Query 5, Expo Secure Store, React Native SVG, Reanimated |
-| **Бекенд** | Node.js, Express 5, TypeScript, Zod 4 (валідація), JWT + bcrypt (авторизація) |
-| **База даних** | PostgreSQL на Neon, Prisma 7 ORM з міграціями |
-| **Документація API** | OpenAPI, згенерований зі схем Zod (`zod-to-openapi`), Swagger UI |
-| **Тести** | Vitest |
-| **Деплой** | Vercel (веб), Render (API), Neon (база) |
+| **Web** | React 19, TypeScript, Vite 8, React Router, TanStack Query 5, SCSS (BEM), Geologica font |
+| **Mobile** | Expo SDK 57, React Native 0.86, Expo Router, TanStack Query 5, Expo Secure Store, React Native SVG, Reanimated |
+| **Backend** | Node.js, Express 5, TypeScript, Zod 4 (validation), JWT + bcrypt (auth) |
+| **Database** | PostgreSQL on Neon, Prisma 7 ORM with migrations |
+| **API docs** | OpenAPI generated from Zod schemas (`zod-to-openapi`), Swagger UI |
+| **Tests** | Vitest |
+| **Deployment** | Vercel (web), Render (API), Neon (database) |
 
-### Що цікавого всередині
+### Under the hood
 
-- **Гроші — в копійках.** Усі розрахунки йдуть у цілих копійках, тож копійки не губляться на округленні: 100 ₴ на трьох — це 33,34 + 33,33 + 33,33.
-- **Кеш запитів.** TanStack Query кешує дані між сторінками, а після змін оновлює лише те, що змінилось. Усі ключі кешу зібрані в одному файлі.
-- **Шари на бекенді.** Маршрути → контролери → сервіси; помилки валідації повертаються з деталями по полях (`422`), а доступ до чужих подорожей закритий (`403`).
-- **Документація, що не відстає.** Swagger будується з тих самих схем Zod, якими перевіряються запити, тож опис API завжди збігається з реальною поведінкою.
+- **Money in kopecks.** All calculations use whole kopecks, so nothing gets lost to rounding: 100 ₴ split three ways is 33.34 + 33.33 + 33.33.
+- **Request caching.** TanStack Query caches data between pages and, after a change, refetches only what actually changed. All cache keys live in one file.
+- **Layered backend.** Routes → controllers → services; validation errors come back with per-field details (`422`), and other people's trips are off-limits (`403`).
+- **Docs that don't drift.** Swagger is built from the same Zod schemas that validate requests, so the API description always matches real behavior.
 
-## Структура репозиторію
+## Repository structure
 
 ```
 navpil/
 ├── backend/            # REST API: Express + Prisma
-│   ├── prisma/         # схема бази й міграції
+│   ├── prisma/         # database schema and migrations
 │   └── src/
-│       ├── routes/       # маршрути
-│       ├── controllers/  # обробка запитів і статуси
-│       ├── services/     # бізнес-логіка й робота з базою
-│       ├── validation/   # схеми Zod
-│       └── docs/         # OpenAPI-опис
-├── frontend/           # веб-клієнт: React + Vite
+│       ├── routes/       # routes
+│       ├── controllers/  # request handling and status codes
+│       ├── services/     # business logic and database access
+│       ├── validation/   # Zod schemas
+│       └── docs/         # OpenAPI description
+├── frontend/           # web client: React + Vite
 │   └── src/
-│       ├── api/          # запити до API
+│       ├── api/          # API requests
 │       ├── hooks/        # useQuery / useMutation
-│       ├── pages/        # сторінки
-│       ├── components/   # спільні компоненти
-│       └── utils/        # розрахунок, форматування, валідація
-└── mobile/             # мобільний клієнт: Expo + React Native
+│       ├── pages/        # pages
+│       ├── components/   # shared components
+│       └── utils/        # settlement, formatting, validation
+└── mobile/             # mobile client: Expo + React Native
     └── src/
-        ├── app/          # екрани (файлова маршрутизація Expo Router)
+        ├── app/          # screens (Expo Router file-based routing)
         ├── components/
         ├── hooks/
         └── api/
 ```
 
-## Запуск локально
+## Running locally
 
-**Потрібно:** Node.js 20.19 або новіший і база PostgreSQL (наприклад, безкоштовна на [Neon](https://neon.tech)).
+**Requirements:** Node.js 20.19 or newer and a PostgreSQL database (for example, a free one on [Neon](https://neon.tech)).
 
-### 1. Бекенд
+### 1. Backend
 
 ```bash
 cd backend
 npm install
 ```
 
-Створіть `backend/.env`:
+Create `backend/.env`:
 
 ```env
 DATABASE_URL="postgresql://USER:PASSWORD@HOST/DB?sslmode=require"
-JWT_SECRET_KEY="будь-який-довгий-випадковий-рядок"
+JWT_SECRET_KEY="any-long-random-string"
 ```
 
 ```bash
-npm run db:migrate   # створити таблиці
-npm run dev          # http://localhost:3000, Swagger — /api-docs
+npm run db:migrate   # create the tables
+npm run dev          # http://localhost:3000, Swagger at /api-docs
 ```
 
-### 2. Веб
+### 2. Web
 
 ```bash
 cd frontend
@@ -168,9 +178,9 @@ echo 'VITE_API_URL="http://localhost:3000"' > .env
 npm run dev          # http://localhost:5173
 ```
 
-> Бекенд і веб разом можна запустити з кореня: `npm run dev`.
+> You can start the backend and the web app together from the repo root: `npm run dev`.
 
-### 3. Мобільний застосунок
+### 3. Mobile app
 
 ```bash
 cd mobile
@@ -179,55 +189,55 @@ echo 'EXPO_PUBLIC_API_URL=https://api-node-navpil.onrender.com' > .env
 npx expo start
 ```
 
-Відскануйте QR-код застосунком **Expo Go** на телефоні.
+Scan the QR code with the **Expo Go** app on your phone.
 
-### Тести
+### Tests
 
 ```bash
-npm test             # з кореня, запускає Vitest для бекенду
+npm test             # from the repo root, runs Vitest for the backend
 ```
 
 ## API
 
-Повний інтерактивний опис — у **[Swagger](https://api-node-navpil.onrender.com/api-docs)**. Усі маршрути, крім `/auth`, потребують заголовка `Authorization: Bearer <token>`.
+The full interactive reference is in **[Swagger](https://api-node-navpil.onrender.com/api-docs)**. Every route except `/auth` requires an `Authorization: Bearer <token>` header.
 
-| Метод | Маршрут | Опис |
+| Method | Route | Description |
 |---|---|---|
-| `POST` | `/auth/register` | Реєстрація |
-| `POST` | `/auth/login` | Вхід, повертає JWT |
-| `GET` | `/users/me` | Поточний користувач |
-| `GET` | `/rooms` | Мої подорожі: `active`, `upcoming`, `past` |
-| `GET` | `/rooms/summary` | Підсумки й баланс за всіма подорожами |
-| `POST` | `/rooms` | Створити подорож |
-| `POST` | `/rooms/join` | Приєднатися за кодом запрошення |
-| `GET` · `PATCH` · `DELETE` | `/rooms/:roomId` | Подорож: отримати, змінити, видалити |
-| `DELETE` | `/rooms/:roomId/members/:userId` | Видалити учасника |
-| `GET` · `POST` | `/rooms/:roomId/items` | Витрати подорожі |
-| `GET` · `PATCH` · `DELETE` | `/rooms/:roomId/items/:itemId` | Одна витрата |
-| `GET` · `POST` | `/rooms/:roomId/payments` | Перекази між учасниками |
+| `POST` | `/auth/register` | Sign up |
+| `POST` | `/auth/login` | Log in, returns a JWT |
+| `GET` | `/users/me` | Current user |
+| `GET` | `/rooms` | My trips: `active`, `upcoming`, `past` |
+| `GET` | `/rooms/summary` | Totals and balance across all trips |
+| `POST` | `/rooms` | Create a trip |
+| `POST` | `/rooms/join` | Join a trip with an invite code |
+| `GET` · `PATCH` · `DELETE` | `/rooms/:roomId` | Get, update or delete a trip |
+| `DELETE` | `/rooms/:roomId/members/:userId` | Remove a member |
+| `GET` · `POST` | `/rooms/:roomId/items` | Trip expenses |
+| `GET` · `PATCH` · `DELETE` | `/rooms/:roomId/items/:itemId` | A single expense |
+| `GET` · `POST` | `/rooms/:roomId/payments` | Transfers between members |
 
-## Як рахується розрахунок
+## How settlement works
 
-1. Для кожного учасника рахується, **скільки він заплатив** і **яка його частка** у витратах, де він бере участь.
-2. Баланс = заплатив − частка, з урахуванням уже зроблених переказів. Плюс — учасникові мають повернути, мінус — він винен.
-3. Боржники й кредитори сортуються за сумою, і найбільший борг закривається найбільшим кредитом, поки баланси не обнуляться.
+1. For each member we calculate **how much they paid** and **their share** of the expenses they take part in.
+2. Balance = paid − share, adjusted for transfers already made. Positive means the member is owed money, negative means they owe.
+3. Debtors and creditors are sorted by amount, and the largest debt is matched with the largest credit until every balance is zero.
 
-Так замість переказів «кожен кожному» виходить мінімум: для чотирьох людей — щонайбільше три перекази, а не до дванадцяти.
+Instead of "everyone pays everyone", this gives the minimum: for four people, at most three transfers instead of up to twelve.
 
-## Деплой
+## Deployment
 
-| Що | Де | Налаштування |
+| What | Where | Settings |
 |---|---|---|
 | API | [Render](https://render.com) | Root: `backend`, build: `npm install && npm run build && npm run db:deploy`, start: `npm start` |
-| Веб | [Vercel](https://vercel.com) | Root: `frontend`, змінна `VITE_API_URL`; `vercel.json` перенаправляє всі шляхи на `index.html` |
-| База | [Neon](https://neon.tech) | PostgreSQL, рядок підключення — у `DATABASE_URL` на Render |
+| Web | [Vercel](https://vercel.com) | Root: `frontend`, `VITE_API_URL` variable; `vercel.json` rewrites all paths to `index.html` |
+| Database | [Neon](https://neon.tech) | PostgreSQL, connection string in `DATABASE_URL` on Render |
 
 ---
 
 <div align="center">
 
-Зроблено **Артемом Барановським** як лабораторні роботи
-[Lab 21 — REST API з авторизацією](https://github.com/rmalkevy/Programming-Practice-Projects/blob/main/labs/lab-21-rest-api-auth.md)
-і Lab 30 — кросплатформений мобільний застосунок.
+Built by **Artem Baranovskyi** as lab assignments
+[Lab 21 — REST API with authentication](https://github.com/rmalkevy/Programming-Practice-Projects/blob/main/labs/lab-21-rest-api-auth.md)
+and Lab 30 — a cross-platform mobile app.
 
 </div>
